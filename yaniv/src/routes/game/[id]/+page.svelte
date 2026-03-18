@@ -1,0 +1,185 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import { Button } from '$lib/components/ui/button/index.js';
+  import Header from '$lib/components/layout/Header.svelte';
+  import Scoreboard from '$lib/components/scoreboard/Scoreboard.svelte';
+  import RoundEntryPanel from '$lib/components/round-entry/RoundEntryPanel.svelte';
+  import { gameStore } from '$lib/stores/game.svelte';
+  import { audio } from '$lib/stores/audio.svelte';
+  import TableTimer from '$lib/components/timer/TableTimer.svelte';
+
+  let showRoundEntry = $state(false);
+  let notFound = $state(false);
+  let showAbandonConfirm = $state(false);
+
+  const game = $derived(gameStore.active);
+
+  onMount(() => {
+    const id = $page.params.id;
+    // If active game matches, we're good; otherwise try loading
+    if (!gameStore.active || gameStore.active.id !== id) {
+      const found = gameStore.loadGame(id);
+      if (!found) {
+        notFound = true;
+      }
+    }
+  });
+
+  function handleRoundSubmit(
+    handValues: Record<string, number>,
+    yanivCallerId: string,
+    assafPlayerId?: string
+  ) {
+    showRoundEntry = false;
+    const round = gameStore.addRound(handValues, yanivCallerId, assafPlayerId);
+
+    // Play sound effects based on round result
+    if (round) {
+      if (gameStore.active?.status === 'completed') {
+        audio.play('win');
+      } else if (round.wasAssafed) {
+        audio.play('assaf');
+      } else if (round.halvingEvents.length > 0) {
+        audio.play('halving');
+      } else if (round.eliminations.length > 0) {
+        audio.play('elimination');
+      } else {
+        audio.play('yaniv');
+      }
+    }
+
+    // Auto-navigate to results if game completed
+    if (gameStore.active?.status === 'completed') {
+      goto(`/game/${$page.params.id}/results`);
+    }
+  }
+
+  function handleUndo() {
+    gameStore.undoLastRound();
+  }
+
+  function handleAbandon() {
+    showAbandonConfirm = false;
+    gameStore.abandonGame();
+    goto('/');
+  }
+
+  const activePlayerCount = $derived(game?.players.filter(p => !p.eliminated).length ?? 0);
+  const roundCount = $derived(game?.rounds.length ?? 0);
+</script>
+
+{#if notFound}
+  <Header title="Game Not Found" showBack />
+  <div class="mx-auto max-w-lg px-4 py-12 text-center">
+    <p class="text-emerald-400 mb-4">This game could not be found.</p>
+    <a href="/">
+      <Button class="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold">Go Home</Button>
+    </a>
+  </div>
+{:else if game}
+  <Header title="Round {roundCount + 1}" showBack />
+
+  <div class="mx-auto max-w-lg px-4 py-4 space-y-4">
+    <!-- Game status bar -->
+    <div class="flex items-center justify-between text-xs text-emerald-500">
+      <span>{activePlayerCount} active · limit {game.settings.scoreLimit}</span>
+      <span class="capitalize">{game.settings.variantName}</span>
+    </div>
+
+    <!-- Table timer (advisory, shown when enabled in settings) -->
+    {#if game.settings.tableTimerEnabled}
+      <TableTimer seconds={game.settings.tableTimerSeconds} />
+    {/if}
+
+    <!-- Scoreboard -->
+    <div class="rounded-xl border border-emerald-800/50 bg-emerald-950/60 overflow-hidden">
+      <Scoreboard {game} />
+    </div>
+
+    <!-- Controls -->
+    {#if game.status === 'in_progress'}
+      <div class="flex gap-3">
+        <Button
+          onclick={() => showRoundEntry = true}
+          class="flex-1 bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold py-5 text-base shadow-lg shadow-amber-500/20"
+        >
+          + Add Round
+        </Button>
+
+        {#if roundCount > 0}
+          <Button
+            variant="outline"
+            onclick={handleUndo}
+            class="border-emerald-700 text-emerald-400 hover:bg-emerald-900/50 px-4"
+            title="Undo last round"
+          >
+            ↩
+          </Button>
+        {/if}
+
+        <Button
+          variant="outline"
+          onclick={() => showAbandonConfirm = true}
+          class="border-red-800/50 text-red-400/70 hover:bg-red-950/30 hover:text-red-400 px-4"
+          title="Abandon game"
+        >
+          ✕
+        </Button>
+      </div>
+    {:else}
+      <div class="text-center">
+        <a href="/game/{game.id}/results">
+          <Button class="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold px-8">
+            View Results
+          </Button>
+        </a>
+      </div>
+    {/if}
+  </div>
+
+  <!-- Round entry panel -->
+  {#if showRoundEntry}
+    <RoundEntryPanel
+      {game}
+      onSubmit={handleRoundSubmit}
+      onClose={() => showRoundEntry = false}
+    />
+  {/if}
+
+  <!-- Abandon confirm dialog -->
+  {#if showAbandonConfirm}
+    <div
+      class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="bg-emerald-950 border border-emerald-700 rounded-2xl p-6 max-w-sm w-full space-y-4">
+        <h3 class="text-lg font-bold text-red-400 text-center">Abandon Game?</h3>
+        <p class="text-sm text-emerald-400 text-center">This will end the game without a winner. This cannot be undone.</p>
+        <div class="flex gap-3">
+          <Button
+            variant="outline"
+            onclick={() => showAbandonConfirm = false}
+            class="flex-1 border-emerald-700 text-emerald-400"
+          >
+            Keep Playing
+          </Button>
+          <Button
+            onclick={handleAbandon}
+            class="flex-1 bg-red-700 hover:bg-red-600 text-white font-bold"
+          >
+            Abandon
+          </Button>
+        </div>
+      </div>
+    </div>
+  {/if}
+{:else}
+  <!-- Loading state -->
+  <Header title="Loading..." showBack />
+  <div class="mx-auto max-w-lg px-4 py-12 text-center">
+    <p class="text-emerald-500">Loading game...</p>
+  </div>
+{/if}
