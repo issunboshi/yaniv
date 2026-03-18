@@ -129,7 +129,7 @@ pnpm add howler uuid
 pnpm add -D @types/howler @types/uuid
 ```
 
-- [ ] **Step 5: Configure Cloudflare Pages adapter**
+- [ ] **Step 5: Configure static adapter for SPA**
 
 In `svelte.config.js`:
 
