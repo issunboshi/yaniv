@@ -7,6 +7,7 @@
   import Scoreboard from '$lib/components/scoreboard/Scoreboard.svelte';
   import RoundEntryPanel from '$lib/components/round-entry/RoundEntryPanel.svelte';
   import { gameStore } from '$lib/stores/game.svelte';
+  import { audio } from '$lib/stores/audio.svelte';
 
   let showRoundEntry = $state(false);
   let notFound = $state(false);
@@ -31,7 +32,22 @@
     assafPlayerId?: string
   ) {
     showRoundEntry = false;
-    gameStore.addRound(handValues, yanivCallerId, assafPlayerId);
+    const round = gameStore.addRound(handValues, yanivCallerId, assafPlayerId);
+
+    // Play sound effects based on round result
+    if (round) {
+      if (gameStore.active?.status === 'completed') {
+        audio.play('win');
+      } else if (round.wasAssafed) {
+        audio.play('assaf');
+      } else if (round.halvingEvents.length > 0) {
+        audio.play('halving');
+      } else if (round.eliminations.length > 0) {
+        audio.play('elimination');
+      } else {
+        audio.play('yaniv');
+      }
+    }
 
     // Auto-navigate to results if game completed
     if (gameStore.active?.status === 'completed') {
