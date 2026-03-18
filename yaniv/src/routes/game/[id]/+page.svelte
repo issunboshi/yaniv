@@ -8,6 +8,7 @@
   import RoundEntryPanel from '$lib/components/round-entry/RoundEntryPanel.svelte';
   import { gameStore } from '$lib/stores/game.svelte';
   import { audio } from '$lib/stores/audio.svelte';
+  import TableTimer from '$lib/components/timer/TableTimer.svelte';
 
   let showRoundEntry = $state(false);
   let notFound = $state(false);
@@ -86,6 +87,11 @@
       <span>{activePlayerCount} active · limit {game.settings.scoreLimit}</span>
       <span class="capitalize">{game.settings.variantName}</span>
     </div>
+
+    <!-- Table timer (advisory, shown when enabled in settings) -->
+    {#if game.settings.tableTimerEnabled}
+      <TableTimer seconds={game.settings.tableTimerSeconds} />
+    {/if}
 
     <!-- Scoreboard -->
     <div class="rounded-xl border border-emerald-800/50 bg-emerald-950/60 overflow-hidden">
