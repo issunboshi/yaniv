@@ -63,7 +63,7 @@
   <!-- Winner celebration -->
   {#if winner}
     <div class="text-center space-y-3">
-      <div class="text-7xl mb-2">{winner.avatar}</div>
+      <div class="text-7xl mb-2 animate-winner inline-block">{winner.avatar}</div>
       <h2 class="text-3xl font-extrabold text-amber-400 tracking-tight">
         {winner.name} Wins!
       </h2>

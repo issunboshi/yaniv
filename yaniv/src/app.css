@@ -139,6 +139,70 @@ body {
   min-height: 100dvh;
 }
 
+/* Light theme overrides */
+[data-theme="light"] {
+  --yaniv-bg: #f0f4f1;
+  --yaniv-surface: #ffffff;
+  --yaniv-border: #d1d5db;
+  --yaniv-accent: #d97706;
+  --yaniv-text: #1f2937;
+  --yaniv-muted: #6b7280;
+  --yaniv-danger: #dc2626;
+  --yaniv-success: #16a34a;
+}
+
+[data-theme="light"] body {
+  background-color: var(--yaniv-bg);
+  color: var(--yaniv-text);
+}
+
+/* Hover / tap animations */
+.card-hover {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.card-hover:active {
+  transform: scale(0.98);
+}
+
+@keyframes score-flash {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); color: #f59e0b; }
+  100% { transform: scale(1); }
+}
+.animate-score-flash {
+  animation: score-flash 0.5s ease;
+}
+
+@keyframes halving-flash {
+  0% { background-color: transparent; }
+  50% { background-color: rgba(245, 158, 11, 0.2); }
+  100% { background-color: transparent; }
+}
+.animate-halving {
+  animation: halving-flash 1s ease;
+}
+
+/* Winner celebration animation */
+@keyframes winner-bounce {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.2) rotate(-5deg); }
+  50% { transform: scale(1.3) rotate(5deg); }
+  75% { transform: scale(1.2) rotate(-3deg); }
+}
+.animate-winner {
+  animation: winner-bounce 0.8s ease forwards;
+}
+
+/* Card fan animation for home page */
+@keyframes card-fan {
+  from { opacity: 0; transform: rotate(0deg) translateY(20px); }
+  to { opacity: 1; transform: rotate(var(--fan-angle)) translateY(0); }
+}
+
 /* Noise texture overlay */
 body::before {
   content: '';

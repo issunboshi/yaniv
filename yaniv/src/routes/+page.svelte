@@ -9,7 +9,22 @@
 </script>
 
 <div class="mx-auto max-w-lg px-4 pt-12 text-center">
-  <div class="mb-8">
+  <div class="mb-8 relative">
+    <!-- Decorative card fan -->
+    <div class="relative inline-block mb-4" aria-hidden="true">
+      {#each [
+        { angle: '-18deg', delay: '0ms', suit: '♠' },
+        { angle: '-8deg', delay: '60ms', suit: '♥' },
+        { angle: '2deg', delay: '120ms', suit: '♦' },
+        { angle: '12deg', delay: '180ms', suit: '♣' },
+      ] as card}
+        <div
+          class="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-14 rounded-lg border border-emerald-700/60 bg-emerald-900/60 flex items-center justify-center text-sm text-emerald-400/70 origin-bottom shadow-md"
+          style="--fan-angle: {card.angle}; animation: card-fan 0.5s ease {card.delay} both; transform: rotate({card.angle}) translateY(0);"
+        >{card.suit}</div>
+      {/each}
+      <div class="h-16 w-10"></div>
+    </div>
     <h1 class="text-5xl font-extrabold tracking-tight text-amber-400 drop-shadow-lg">
       YANIV
     </h1>
