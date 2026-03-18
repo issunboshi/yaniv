@@ -16,7 +16,7 @@ A mobile-first webapp for tracking scores in the card game Yaniv. The app replac
 | Components | shadcn-svelte | Copy-into-project model allows deep Balatro-themed customization |
 | Styling | Tailwind CSS v4 | Utility-first, pairs with shadcn-svelte |
 | State | Svelte stores + localStorage | Reactive, persistent, no backend |
-| PWA | Vite PWA plugin / basic manifest | Add-to-home-screen on mobile |
+| PWA | Vite PWA plugin / basic manifest | Add-to-home-screen on mobile; precache all assets on install, update on deploy |
 | Deploy | Cloudflare Pages (custom domain) | Free tier, global CDN, SvelteKit adapter available |
 | Audio | Howler.js or Web Audio API | Sound effects for Yaniv calls, Assaf, halvings |
 
@@ -57,7 +57,7 @@ Mobile-first: designed for phone screens passed around a table.
 | Halving rule | on / off | on |
 | Halving multiple | 50 (fixed) | 50 |
 | Assaf rule | on / off | on |
-| Turn timer | off / 30s / 60s / 90s / custom | off |
+| Table timer | off / 30s / 60s / 90s / custom | off |
 | Jokers in deck | on / off | on |
 
 - Preset variants:
@@ -81,15 +81,17 @@ The core of the app. Two main areas:
 **Round Entry (slide-up panel or modal):**
 1. Who called Yaniv? (tap a player avatar)
 2. Enter each non-eliminated player's hand value (number-pad-style input for speed)
-3. System auto-detects Assaf: if any other player's hand value <= caller's, prompt to confirm Assaf (select which player Assaf'd)
+3. System auto-detects Assaf: if any other player's hand value <= caller's, prompt to confirm Assaf. If multiple players qualify, select which one performed the Assaf (only one player can Assaf per round — the others score their hand value normally)
 4. Confirm round → scores calculated and added
 5. Sound effect plays for: successful Yaniv, Assaf, halving, elimination
+
+**Table Timer (optional):**
+A standalone countdown timer for timing real-world turns at the table. This is advisory only — when the timer expires, it plays a sound alert but does not affect scoring or game state. Players can restart or dismiss it. It is independent of round entry.
 
 **Controls:**
 - Undo last round
 - End game early (mark as abandoned)
 - View/change game settings mid-game (non-destructive settings only)
-- Optional turn timer with visual countdown
 
 ### 4. Game Over (`/game/:id/results`)
 
@@ -155,10 +157,37 @@ Aggregated from all games in localStorage:
 
 ## Data Model
 
+### Storage Versioning
+
+All data in localStorage is wrapped in a top-level envelope:
+
 ```typescript
+interface StorageEnvelope {
+  schemaVersion: number;       // increment on any model change
+  knownPlayers: KnownPlayer[]; // global player registry
+  games: Game[];
+  appSettings: AppSettings;
+}
+```
+
+On app load, check `schemaVersion` and run migrations if needed. Wrap all localStorage writes in try/catch to handle quota exceeded errors gracefully (show warning to user, suggest deleting old games).
+
+**Storage budget:** Estimated ~2-5 KB per game. At ~5MB localStorage limit, this supports 1000+ games before concern. Show a warning banner if usage exceeds 4MB.
+
+### Core Types
+
+```typescript
+// Global player registry — stable identity across games
+interface KnownPlayer {
+  id: string;             // stable UUID, reused across games
+  name: string;
+  avatar: string;         // emoji or icon identifier
+  color: string;          // hex color for charts/highlights
+}
+
 interface Game {
   id: string;
-  players: Player[];
+  players: GamePlayer[];  // snapshot of players for this game
   rounds: Round[];
   settings: GameSettings;
   status: 'in_progress' | 'completed' | 'abandoned';
@@ -167,23 +196,25 @@ interface Game {
   winnerId?: string;
 }
 
-interface Player {
-  id: string;
-  name: string;
-  avatar: string;        // emoji or icon identifier
-  color: string;         // hex color for charts/highlights
+// Player as they exist within a specific game
+interface GamePlayer {
+  knownPlayerId: string;  // references KnownPlayer.id
+  name: string;           // snapshot (in case KnownPlayer is renamed later)
+  avatar: string;
+  color: string;
   eliminated: boolean;
   eliminatedAtRound?: number;
 }
 
 interface Round {
   number: number;
-  scores: Record<string, number>;  // playerId -> hand value that round
+  handValues: Record<string, number>;    // playerId -> raw hand value
+  appliedScores: Record<string, number>; // playerId -> actual score delta applied
   yanivCallerId: string;
-  assafPlayerId?: string;          // who performed the Assaf
+  assafPlayerId?: string;                // single player who Assaf'd (see rules)
   wasAssafed: boolean;
-  halvingEvents: string[];         // playerIds whose totals halved this round
-  eliminations: string[];          // playerIds eliminated this round
+  halvingEvents: string[];               // playerIds whose totals halved this round
+  eliminations: string[];                // playerIds eliminated this round
   timestamp: string;
 }
 
@@ -194,14 +225,20 @@ interface GameSettings {
   halvingMultiple: number;
   assafEnabled: boolean;
   assafPenalty: number;
-  timerEnabled: boolean;
-  timerSeconds: number;
+  tableTimerEnabled: boolean;
+  tableTimerSeconds: number;
   jokersEnabled: boolean;
   variantName: string;
 }
+```
 
+### Derived Types (computed, not stored)
+
+```typescript
+// PlayerStats is always computed from Game[] — never persisted directly.
+// This avoids sync issues when games are deleted or rounds undone.
 interface PlayerStats {
-  playerId: string;
+  knownPlayerId: string;
   name: string;
   avatar: string;
   gamesPlayed: number;
@@ -210,9 +247,9 @@ interface PlayerStats {
   successfulYanivs: number;
   timesAssafed: number;
   timesPerformedAssaf: number;
-  totalFinalScore: number;
+  averageFinalScore: number;
   halvingEvents: number;
-  bestComeback: number;          // largest single halving benefit
+  bestComeback: number;
 }
 ```
 
@@ -226,12 +263,15 @@ interface PlayerStats {
    - Caller gets **hand value + assaf penalty** (default 30)
    - Assaf-er gets **0** for the round
    - All others get their hand value added to running total
+   - If multiple players could Assaf (hand <= caller's), the user selects which one. Only one Assaf per round.
 
-3. **Halving:** After adding round scores, if a player's running total lands exactly on a multiple of 50 (50, 100, 150, 200...), their total halves.
+3. **Assaf disabled:** If the Assaf rule is turned off, any valid Yaniv call (hand <= threshold) automatically succeeds. Caller gets 0, all others get their hand value.
 
-4. **Elimination:** After halving check, if a player's running total exceeds the score limit, they are eliminated from future rounds.
+4. **Halving:** After adding round scores, if a player's running total lands exactly on a multiple of the halving number (default 50 — i.e. 50, 100, 150, 200...), their total halves. Note: this triggers only on exact multiples, not when passing through them.
 
-5. **Game Over:** When only one player remains (not eliminated), they win.
+5. **Elimination:** After halving check, if a player's running total exceeds the score limit, they are eliminated from future rounds.
+
+6. **Game Over:** When only one player remains (not eliminated), they win.
 
 ## Share Format
 
@@ -241,10 +281,10 @@ Text-based shareable result (copy to clipboard / Web Share API):
 Yaniv Game Results
 2026-03-18 | Classic (200/7/30)
 
-1st  Alice    87 pts
-2nd  Bob     134 pts
-3rd  Charlie  OUT (round 8)
-4th  Dave     OUT (round 5)
+1st  Alice     87/200
+2nd  Bob      134/200
+3rd  Charlie   OUT (round 8)
+4th  Dave      OUT (round 5)
 
 Highlights:
 - Alice halved at round 6 (100 -> 50)
