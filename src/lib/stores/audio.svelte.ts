@@ -6,7 +6,7 @@ const sounds: Record<string, Howl> = {};
 function getSound(name: string): Howl {
   if (!sounds[name]) {
     sounds[name] = new Howl({
-      src: [`/sounds/${name}.mp3`, `/sounds/${name}.wav`],
+      src: [`/sounds/${name}.wav`],
       volume: settingsStore.current.soundVolume,
     });
   }

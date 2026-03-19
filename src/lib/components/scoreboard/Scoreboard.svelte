@@ -92,8 +92,12 @@
           <td class="py-1.5 px-2 text-emerald-600 text-xs">{round.number}</td>
           {#each game.players as player}
             {@const display = getRoundDisplay(i, player.knownPlayerId)}
+            {@const cumulative = getRoundTotal(i, player.knownPlayerId)}
             <td class="py-1.5 px-2 text-center">
-              <span class={display.classes}>{display.text}</span>
+              <div class="flex flex-col items-center leading-tight">
+                <span class={display.classes}>{display.text}</span>
+                <span class="text-[10px] tabular-nums text-emerald-600">{cumulative}</span>
+              </div>
             </td>
           {/each}
         </tr>
