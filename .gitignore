@@ -1,3 +1,14 @@
+# Dependencies
+node_modules
+
+# Build output
+build
+dist
+dist-ssr
+
+# SvelteKit
+.svelte-kit
+
 # Logs
 logs
 *.log
@@ -7,11 +18,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Local env / config
 *.local
-.astro
 
 # Editor directories and files
 .vscode/*
@@ -23,4 +31,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Serena (per-developer memories)
+.serena/memories/
+
+# Git worktrees
+.worktrees/
+
+# Misc
 /viewport-screenshots

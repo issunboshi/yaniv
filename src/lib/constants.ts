@@ -14,7 +14,7 @@ export const PLAYER_AVATARS = [
 
 export const VARIANT_CLASSIC: GameSettings = {
   scoreLimit: 200,
-  yanivThreshold: 7,
+  yanivThreshold: 5,
   halvingEnabled: true,
   halvingMultiple: 50,
   assafEnabled: true,
