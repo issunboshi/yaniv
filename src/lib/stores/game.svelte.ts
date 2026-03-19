@@ -87,6 +87,35 @@ export const gameStore = {
     return round;
   },
 
+  editRound(roundIndex: number, newHandValues: Record<string, number>) {
+    if (!activeGame || roundIndex < 0 || roundIndex >= activeGame.rounds.length) return;
+
+    // Collect replay inputs: update target round's hand values, keep caller/assaf the same
+    const replayInputs = activeGame.rounds.map((r, i) => ({
+      handValues: i === roundIndex ? newHandValues : { ...r.handValues },
+      yanivCallerId: r.yanivCallerId,
+      assafPlayerId: r.assafPlayerId,
+    }));
+
+    // Reset all rounds and player state
+    activeGame.rounds = [];
+    for (const player of activeGame.players) {
+      player.eliminated = false;
+      player.eliminatedAtRound = undefined;
+    }
+    activeGame.status = 'in_progress';
+    activeGame.completedAt = undefined;
+    activeGame.winnerId = undefined;
+
+    // Replay each round through normal addRound logic
+    for (const input of replayInputs) {
+      this.addRound(input.handValues, input.yanivCallerId, input.assafPlayerId);
+      if ((activeGame.status as string) === 'completed') break;
+    }
+
+    storage.saveGame(activeGame);
+  },
+
   undoLastRound() {
     if (!activeGame || activeGame.rounds.length === 0) return;
 

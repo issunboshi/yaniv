@@ -13,6 +13,8 @@
   let showRoundEntry = $state(false);
   let notFound = $state(false);
   let showAbandonConfirm = $state(false);
+  let editingRoundIndex = $state<number | null>(null);
+  let pendingEditIndex = $state<number | null>(null);
 
   const game = $derived(gameStore.active);
 
@@ -60,6 +62,33 @@
     gameStore.undoLastRound();
   }
 
+  function handleEditRoundRequest(roundIndex: number) {
+    if (!game || game.status !== 'in_progress') return;
+    pendingEditIndex = roundIndex;
+  }
+
+  function confirmEdit() {
+    if (pendingEditIndex === null) return;
+    editingRoundIndex = pendingEditIndex;
+    pendingEditIndex = null;
+    showRoundEntry = true;
+  }
+
+  function handleEditSubmit(
+    handValues: Record<string, number>,
+    yanivCallerId: string,
+    assafPlayerId?: string
+  ) {
+    if (editingRoundIndex === null) return;
+    showRoundEntry = false;
+    gameStore.editRound(editingRoundIndex, handValues);
+    editingRoundIndex = null;
+
+    if (gameStore.active?.status === 'completed') {
+      goto(`/game/${$page.params.id}/results`);
+    }
+  }
+
   function handleAbandon() {
     showAbandonConfirm = false;
     gameStore.abandonGame();
@@ -95,7 +124,7 @@
 
     <!-- Scoreboard -->
     <div class="rounded-xl border border-emerald-800/50 bg-emerald-950/60 overflow-hidden">
-      <Scoreboard {game} />
+      <Scoreboard {game} onEditRound={game.status === 'in_progress' ? handleEditRoundRequest : undefined} />
     </div>
 
     <!-- Controls -->
@@ -143,9 +172,41 @@
   {#if showRoundEntry}
     <RoundEntryPanel
       {game}
-      onSubmit={handleRoundSubmit}
-      onClose={() => showRoundEntry = false}
+      editingRound={editingRoundIndex !== null ? game.rounds[editingRoundIndex] : undefined}
+      onSubmit={editingRoundIndex !== null ? handleEditSubmit : handleRoundSubmit}
+      onClose={() => { showRoundEntry = false; editingRoundIndex = null; }}
     />
+  {/if}
+
+  <!-- Edit round confirm dialog -->
+  {#if pendingEditIndex !== null}
+    <div
+      class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="bg-emerald-950 border border-amber-700/50 rounded-2xl p-6 max-w-sm w-full space-y-4">
+        <h3 class="text-lg font-bold text-amber-400 text-center">Edit Round {(game.rounds[pendingEditIndex]?.number) ?? ''}?</h3>
+        <p class="text-sm text-emerald-400 text-center">
+          Changing hand values will recalculate all scores, halvings, and eliminations from this round onward.
+        </p>
+        <div class="flex gap-3">
+          <Button
+            variant="outline"
+            onclick={() => pendingEditIndex = null}
+            class="flex-1 border-emerald-700 text-emerald-400"
+          >
+            Cancel
+          </Button>
+          <Button
+            onclick={confirmEdit}
+            class="flex-1 bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold"
+          >
+            Edit Round
+          </Button>
+        </div>
+      </div>
+    </div>
   {/if}
 
   <!-- Abandon confirm dialog -->
