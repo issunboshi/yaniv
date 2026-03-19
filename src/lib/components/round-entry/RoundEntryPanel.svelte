@@ -2,30 +2,43 @@
   import { Input } from '$lib/components/ui/input/index.js';
   import { Button } from '$lib/components/ui/button/index.js';
   import YanivCallerSelect from './YanivCallerSelect.svelte';
-  import type { Game } from '$lib/types';
+  import type { Game, Round } from '$lib/types';
 
   interface Props {
     game: Game;
+    editingRound?: Round;
     onSubmit: (handValues: Record<string, number>, yanivCallerId: string, assafPlayerId?: string) => void;
     onClose: () => void;
   }
 
-  let { game, onSubmit, onClose }: Props = $props();
+  let { game, editingRound, onSubmit, onClose }: Props = $props();
 
-  const activePlayers = $derived(game.players.filter(p => !p.eliminated));
+  const activePlayers = $derived(
+    editingRound
+      ? game.players.filter(p => p.knownPlayerId in editingRound.handValues)
+      : game.players.filter(p => !p.eliminated)
+  );
 
   let yanivCallerId = $state<string | null>(null);
   let handValueStrings = $state<Record<string, string>>({});
   let assafPlayerId = $state<string | null>(null);
   let noAssaf = $state(false);
 
-  // Initialize hand value strings for active players
+  // Initialize hand value strings — pre-fill when editing
   $effect(() => {
     const initial: Record<string, string> = {};
     for (const p of activePlayers) {
-      initial[p.knownPlayerId] = '';
+      initial[p.knownPlayerId] = editingRound
+        ? String(editingRound.handValues[p.knownPlayerId] ?? '')
+        : '';
     }
     handValueStrings = initial;
+
+    if (editingRound) {
+      yanivCallerId = editingRound.yanivCallerId;
+      assafPlayerId = editingRound.assafPlayerId ?? null;
+      noAssaf = editingRound.wasAssafed ? false : !editingRound.assafPlayerId;
+    }
   });
 
   const potentialAssafers = $derived(() => {
@@ -112,7 +125,9 @@
       <div class="w-10 h-1 rounded-full bg-emerald-700"></div>
     </div>
 
-    <h2 class="text-lg font-bold text-amber-400 text-center">Record Round</h2>
+    <h2 class="text-lg font-bold text-amber-400 text-center">
+      {editingRound ? `Edit Round ${editingRound.number}` : 'Record Round'}
+    </h2>
 
     <!-- Yaniv caller selection -->
     <YanivCallerSelect
@@ -212,7 +227,7 @@
         disabled={!canSubmit()}
         class="flex-1 bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold disabled:opacity-40"
       >
-        Confirm Round
+        {editingRound ? 'Save Changes' : 'Confirm Round'}
       </Button>
     </div>
   </div>

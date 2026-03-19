@@ -4,9 +4,10 @@
 
   interface Props {
     game: Game;
+    onEditRound?: (roundIndex: number) => void;
   }
 
-  let { game }: Props = $props();
+  let { game, onEditRound }: Props = $props();
 
   const runningTotals = $derived(getRunningTotals(game.rounds));
 
@@ -88,7 +89,10 @@
     <!-- Body: round rows -->
     <tbody>
       {#each game.rounds as round, i}
-        <tr class="border-b border-emerald-900/50 hover:bg-emerald-900/20">
+        <tr
+          class="border-b border-emerald-900/50 hover:bg-emerald-900/20 {onEditRound ? 'cursor-pointer active:bg-emerald-900/40' : ''}"
+          onclick={() => onEditRound?.(i)}
+        >
           <td class="py-1.5 px-2 text-emerald-600 text-xs">{round.number}</td>
           {#each game.players as player}
             {@const display = getRoundDisplay(i, player.knownPlayerId)}
