@@ -3,8 +3,8 @@
   import * as Card from '$lib/components/ui/card/index.js';
   import { storage } from '$lib/stores/storage.svelte';
 
-  const inProgressGame = $derived(
-    storage.games.find(g => g.status === 'in_progress')
+  const inProgressGames = $derived(
+    storage.games.filter(g => g.status === 'in_progress')
   );
 </script>
 
@@ -38,13 +38,20 @@
       </Button>
     </a>
 
-    {#if inProgressGame}
-      <p class="mt-5">OR</p>
-      <a href="/game/{inProgressGame.id}">
-        <Button variant="outline" class="w-full border-emerald-600 text-emerald-300 hover:bg-emerald-900/50 py-4">
-          Resume Game ({inProgressGame.players.length} players, round {inProgressGame.rounds.length})
-        </Button>
-      </a>
+    {#if inProgressGames.length > 0}
+      <p class="mt-5 text-emerald-500 text-sm uppercase tracking-wider">Or resume</p>
+      {#each inProgressGames as game}
+        <a href="/game/{game.id}">
+          <Button variant="outline" class="w-full border-emerald-600 text-emerald-300 hover:bg-emerald-900/50 py-4">
+            <span class="flex items-center justify-center gap-2">
+              {#each game.players as player}
+                <span class="text-base">{player.avatar}</span>
+              {/each}
+              <span class="text-emerald-500 text-xs ml-1">round {game.rounds.length}</span>
+            </span>
+          </Button>
+        </a>
+      {/each}
     {/if}
   </div>
 

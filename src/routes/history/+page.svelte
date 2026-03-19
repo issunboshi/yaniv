@@ -185,8 +185,15 @@
             <p class="text-xs text-emerald-600 py-2">No rounds played.</p>
           {/if}
 
-          <!-- Delete button -->
-          <div class="mt-3 flex justify-end">
+          <!-- Actions -->
+          <div class="mt-3 flex justify-between items-center">
+            {#if game.status === 'in_progress'}
+              <a href="/game/{game.id}" class="text-xs rounded px-3 py-1.5 bg-amber-500/20 text-amber-400 border border-amber-600/50 hover:bg-amber-500/30 transition-colors">
+                Resume
+              </a>
+            {:else}
+              <div></div>
+            {/if}
             {#if isConfirmingDelete}
               <div class="flex items-center gap-2">
                 <span class="text-xs text-red-400">Delete this game?</span>
