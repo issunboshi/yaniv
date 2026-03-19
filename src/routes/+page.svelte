@@ -39,6 +39,7 @@
     </a>
 
     {#if inProgressGame}
+      <p class="mt-5">OR</p>
       <a href="/game/{inProgressGame.id}">
         <Button variant="outline" class="w-full border-emerald-600 text-emerald-300 hover:bg-emerald-900/50 py-4">
           Resume Game ({inProgressGame.players.length} players, round {inProgressGame.rounds.length})
