@@ -9,7 +9,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 RUN pnpm build
-RUN npx esbuild migrations/run.ts --bundle --platform=node --format=esm --outfile=migrations/run.mjs --external:postgres
+RUN pnpm exec esbuild migrations/run.ts --bundle --platform=node --format=esm --outfile=migrations/run.mjs --external:postgres
 
 FROM node:22-slim
 
