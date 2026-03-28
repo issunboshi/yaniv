@@ -20,14 +20,15 @@
     const validPlayers = players.filter(p => p.name.trim());
     if (validPlayers.length < 2) return;
 
-    const gamePlayers: GamePlayer[] = validPlayers.map(p => {
+    const gamePlayers: GamePlayer[] = validPlayers.map((p, i) => {
       const known = playersStore.getOrCreate(p.name.trim(), p.avatar, p.color);
       return {
-        knownPlayerId: known.id,
+        playerId: known.id,
         name: known.name,
         avatar: known.avatar,
         color: known.color,
         eliminated: false,
+        displayOrder: i,
       };
     });
 

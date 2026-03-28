@@ -186,7 +186,7 @@
       aria-modal="true"
     >
       <div class="bg-emerald-950 border border-amber-700/50 rounded-2xl p-6 max-w-sm w-full space-y-4">
-        <h3 class="text-lg font-bold text-amber-400 text-center">Edit Round {(game.rounds[pendingEditIndex]?.number) ?? ''}?</h3>
+        <h3 class="text-lg font-bold text-amber-400 text-center">Edit Round {(game.rounds[pendingEditIndex]?.roundNumber) ?? ''}?</h3>
         <p class="text-sm text-emerald-400 text-center">
           Changing hand values will recalculate all scores, halvings, and eliminations from this round onward.
         </p>

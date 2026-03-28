@@ -19,6 +19,7 @@ export const VARIANT_CLASSIC: GameSettings = {
   halvingMultiple: 50,
   assafEnabled: true,
   assafPenalty: 30,
+  autoAssaf: false,
   tableTimerEnabled: false,
   tableTimerSeconds: 60,
   jokersEnabled: true,

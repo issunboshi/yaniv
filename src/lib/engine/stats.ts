@@ -14,9 +14,9 @@ export function derivePlayerStats(games: Game[]): PlayerStats[] {
     if (game.status === 'abandoned') continue;
 
     for (const player of game.players) {
-      if (!statsMap.has(player.knownPlayerId)) {
-        statsMap.set(player.knownPlayerId, {
-          knownPlayerId: player.knownPlayerId,
+      if (!statsMap.has(player.playerId)) {
+        statsMap.set(player.playerId, {
+          playerId: player.playerId,
           name: player.name,
           avatar: player.avatar,
           gamesPlayed: 0,
@@ -31,17 +31,17 @@ export function derivePlayerStats(games: Game[]): PlayerStats[] {
         });
       }
 
-      const stat = statsMap.get(player.knownPlayerId)!;
+      const stat = statsMap.get(player.playerId)!;
       stat.name = player.name;
       stat.avatar = player.avatar;
       stat.gamesPlayed++;
 
-      if (game.winnerId === player.knownPlayerId) {
+      if (game.winnerId === player.playerId) {
         stat.wins++;
       }
 
       for (const round of game.rounds) {
-        if (round.yanivCallerId === player.knownPlayerId) {
+        if (round.yanivCallerId === player.playerId) {
           stat.yanivCalls++;
           if (!round.wasAssafed) {
             stat.successfulYanivs++;
@@ -49,12 +49,12 @@ export function derivePlayerStats(games: Game[]): PlayerStats[] {
             stat.timesAssafed++;
           }
         }
-        if (round.assafPlayerIds.includes(player.knownPlayerId)) {
+        if (round.assafPlayerIds.includes(player.playerId)) {
           stat.timesPerformedAssaf++;
         }
-        if (round.halvingEvents.includes(player.knownPlayerId)) {
+        if (round.halvingEvents.includes(player.playerId)) {
           stat.halvingEvents++;
-          const recovery = -(round.appliedScores[player.knownPlayerId] ?? 0);
+          const recovery = -(round.appliedScores[player.playerId] ?? 0);
           if (recovery > stat.bestComeback) {
             stat.bestComeback = recovery;
           }
@@ -70,11 +70,11 @@ export function derivePlayerStats(games: Game[]): PlayerStats[] {
       let counted = 0;
       for (const game of games) {
         if (game.status === 'abandoned') continue;
-        const player = game.players.find(p => p.knownPlayerId === stat.knownPlayerId);
+        const player = game.players.find(p => p.playerId === stat.playerId);
         if (!player) continue;
         let score = 0;
         for (const round of game.rounds) {
-          score += round.appliedScores[player.knownPlayerId] ?? 0;
+          score += round.appliedScores[player.playerId] ?? 0;
         }
         totalFinalScore += score;
         counted++;
@@ -93,7 +93,7 @@ export function deriveGlobalStats(games: Game[]): GlobalStats {
   const winCounts = new Map<string, { name: string; wins: number }>();
   for (const game of completed) {
     if (!game.winnerId) continue;
-    const winner = game.players.find(p => p.knownPlayerId === game.winnerId);
+    const winner = game.players.find(p => p.playerId === game.winnerId);
     if (!winner) continue;
     const entry = winCounts.get(game.winnerId) ?? { name: winner.name, wins: 0 };
     entry.wins++;

@@ -1,5 +1,5 @@
 import { SCHEMA_VERSION, STORAGE_KEY, STORAGE_WARNING_BYTES } from '$lib/constants';
-import type { StorageEnvelope, AppSettings, Game, KnownPlayer } from '$lib/types';
+import type { AppSettings, Game, Player } from '$lib/types';
 import { VARIANT_CLASSIC } from '$lib/constants';
 
 const defaultAppSettings: AppSettings = {
@@ -8,6 +8,13 @@ const defaultAppSettings: AppSettings = {
   soundVolume: 0.7,
   theme: 'dark',
 };
+
+interface StorageEnvelope {
+  schemaVersion: number;
+  knownPlayers: Player[];
+  games: Game[];
+  appSettings: AppSettings;
+}
 
 const defaultEnvelope: StorageEnvelope = {
   schemaVersion: SCHEMA_VERSION,
@@ -70,7 +77,7 @@ export const storage = {
     save(envelope);
   },
 
-  saveKnownPlayer(player: KnownPlayer) {
+  saveKnownPlayer(player: Player) {
     const idx = envelope.knownPlayers.findIndex(p => p.id === player.id);
     if (idx >= 0) {
       envelope.knownPlayers[idx] = player;

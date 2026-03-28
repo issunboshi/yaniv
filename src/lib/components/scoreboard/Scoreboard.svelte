@@ -16,11 +16,11 @@
     if (activePlayers.length === 0) return null;
     let leader = activePlayers[0];
     for (const p of activePlayers) {
-      const pScore = runningTotals[p.knownPlayerId] ?? 0;
-      const leaderScore = runningTotals[leader.knownPlayerId] ?? 0;
+      const pScore = runningTotals[p.playerId] ?? 0;
+      const leaderScore = runningTotals[leader.playerId] ?? 0;
       if (pScore < leaderScore) leader = p;
     }
-    return leader.knownPlayerId;
+    return leader.playerId;
   });
 
   function getRoundTotal(roundIndex: number, playerId: string): number {
@@ -93,10 +93,10 @@
           class="border-b border-emerald-900/50 hover:bg-emerald-900/20 {onEditRound ? 'cursor-pointer active:bg-emerald-900/40' : ''}"
           onclick={() => onEditRound?.(i)}
         >
-          <td class="py-1.5 px-2 text-emerald-600 text-xs">{round.number}</td>
+          <td class="py-1.5 px-2 text-emerald-600 text-xs">{round.roundNumber}</td>
           {#each game.players as player}
-            {@const display = getRoundDisplay(i, player.knownPlayerId)}
-            {@const cumulative = getRoundTotal(i, player.knownPlayerId)}
+            {@const display = getRoundDisplay(i, player.playerId)}
+            {@const cumulative = getRoundTotal(i, player.playerId)}
             <td class="py-1.5 px-2 text-center">
               <div class="flex flex-col items-center leading-tight">
                 <span class={display.classes}>{display.text}</span>
@@ -113,8 +113,8 @@
       <tr class="border-t-2 border-emerald-700">
         <td class="py-2 px-2 text-emerald-500 text-xs font-bold">TOT</td>
         {#each game.players as player}
-          {@const total = runningTotals[player.knownPlayerId] ?? 0}
-          {@const isLeader = leaderId() === player.knownPlayerId}
+          {@const total = runningTotals[player.playerId] ?? 0}
+          {@const isLeader = leaderId() === player.playerId}
           <td class="py-2 px-2 text-center">
             <span class="font-bold tabular-nums text-base {player.eliminated ? 'line-through text-red-400/60' : isLeader ? 'text-amber-400' : 'text-emerald-100'}">
               {total}

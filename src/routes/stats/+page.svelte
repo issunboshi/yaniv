@@ -12,7 +12,7 @@
   let selectedPlayer = $state<PlayerStats | null>(null);
 
   function handleSelectPlayer(player: PlayerStats) {
-    selectedPlayer = selectedPlayer?.knownPlayerId === player.knownPlayerId ? null : player;
+    selectedPlayer = selectedPlayer?.playerId === player.playerId ? null : player;
   }
 </script>
 
@@ -55,7 +55,7 @@
     <Leaderboard
       stats={playerStats}
       onSelectPlayer={handleSelectPlayer}
-      selectedPlayerId={selectedPlayer?.knownPlayerId ?? null}
+      selectedPlayerId={selectedPlayer?.playerId ?? null}
     />
   </section>
 

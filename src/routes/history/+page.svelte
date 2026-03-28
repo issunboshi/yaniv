@@ -99,7 +99,7 @@
 
   {#each filteredGames() as game (game.id)}
     {@const totals = getRunningTotals(game.rounds)}
-    {@const winner = game.winnerId ? game.players.find(p => p.knownPlayerId === game.winnerId) : null}
+    {@const winner = game.winnerId ? game.players.find(p => p.playerId === game.winnerId) : null}
     {@const isExpanded = expandedId === game.id}
     {@const isConfirmingDelete = deleteConfirmId === game.id}
 
@@ -140,9 +140,9 @@
               const running: Record<string, number> = {};
               return game.rounds.map(round => {
                 const cells = game.players.map(player => {
-                  const score = round.appliedScores[player.knownPlayerId] ?? 0;
-                  running[player.knownPlayerId] = (running[player.knownPlayerId] ?? 0) + score;
-                  return { score, cumulative: running[player.knownPlayerId] };
+                  const score = round.appliedScores[player.playerId] ?? 0;
+                  running[player.playerId] = (running[player.playerId] ?? 0) + score;
+                  return { score, cumulative: running[player.playerId] };
                 });
                 return { round, cells };
               });
@@ -162,7 +162,7 @@
                 <tbody>
                   {#each roundRows as row}
                     <tr class="border-b border-emerald-900/40">
-                      <td class="py-1 pr-2 text-emerald-600">{row.round.number}</td>
+                      <td class="py-1 pr-2 text-emerald-600">{row.round.roundNumber}</td>
                       {#each row.cells as cell}
                         <td class="text-right py-1 px-1">
                           <span class="text-emerald-400">{cell.score >= 0 ? '+' : ''}{cell.score}</span>
@@ -175,7 +175,7 @@
                   <tr class="border-t border-emerald-700/40 font-semibold">
                     <td class="py-1 pr-2 text-emerald-500">Total</td>
                     {#each game.players as player}
-                      <td class="text-right py-1 px-1 text-amber-400">{totals[player.knownPlayerId] ?? 0}</td>
+                      <td class="text-right py-1 px-1 text-amber-400">{totals[player.playerId] ?? 0}</td>
                     {/each}
                   </tr>
                 </tbody>

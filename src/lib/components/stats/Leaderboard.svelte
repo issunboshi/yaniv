@@ -26,7 +26,7 @@
 
   {#each ranked as player, i}
     {@const isFirst = i === 0}
-    {@const isSelected = selectedPlayerId === player.knownPlayerId}
+    {@const isSelected = selectedPlayerId === player.playerId}
     <button
       onclick={() => onSelectPlayer?.(player)}
       class="w-full rounded-lg border px-4 py-3 text-left transition-colors {isFirst

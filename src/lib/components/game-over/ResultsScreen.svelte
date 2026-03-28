@@ -15,7 +15,7 @@
   const rankedPlayers = $derived(() => {
     const sorted = [...game.players].sort((a, b) => {
       if (!a.eliminated && !b.eliminated) {
-        return (totals[a.knownPlayerId] ?? 0) - (totals[b.knownPlayerId] ?? 0);
+        return (totals[a.playerId] ?? 0) - (totals[b.playerId] ?? 0);
       }
       if (a.eliminated && !b.eliminated) return 1;
       if (!a.eliminated && b.eliminated) return -1;
@@ -30,21 +30,21 @@
     const items: { icon: string; text: string }[] = [];
     for (const round of game.rounds) {
       if (round.wasAssafed && round.assafPlayerIds.length > 0) {
-        const assafer = game.players.find(p => p.knownPlayerId === round.assafPlayerIds[0]);
-        const caller = game.players.find(p => p.knownPlayerId === round.yanivCallerId);
+        const assafer = game.players.find(p => p.playerId === round.assafPlayerIds[0]);
+        const caller = game.players.find(p => p.playerId === round.yanivCallerId);
         if (assafer && caller) {
           items.push({
             icon: '⚡',
-            text: `Round ${round.number}: ${assafer.avatar} ${assafer.name} Assaf'd ${caller.avatar} ${caller.name}!`
+            text: `Round ${round.roundNumber}: ${assafer.avatar} ${assafer.name} Assaf'd ${caller.avatar} ${caller.name}!`
           });
         }
       }
       for (const pid of round.halvingEvents) {
-        const player = game.players.find(p => p.knownPlayerId === pid);
+        const player = game.players.find(p => p.playerId === pid);
         if (player) {
           items.push({
             icon: '✂️',
-            text: `Round ${round.number}: ${player.avatar} ${player.name}'s score was halved!`
+            text: `Round ${round.roundNumber}: ${player.avatar} ${player.name}'s score was halved!`
           });
         }
       }
@@ -68,7 +68,7 @@
         {winner.name} Wins!
       </h2>
       <p class="text-emerald-400 text-sm">
-        Final score: {totals[winner.knownPlayerId] ?? 0} / {game.settings.scoreLimit}
+        Final score: {totals[winner.playerId] ?? 0} / {game.settings.scoreLimit}
       </p>
     </div>
   {/if}
@@ -78,7 +78,7 @@
     <h3 class="text-sm font-semibold text-emerald-400 uppercase tracking-wider">Final Standings</h3>
     <div class="space-y-2">
       {#each rankedPlayers() as player, i}
-        {@const score = totals[player.knownPlayerId] ?? 0}
+        {@const score = totals[player.playerId] ?? 0}
         {@const isFirst = i === 0}
         <div class="flex items-center gap-3 rounded-xl px-4 py-3 border {isFirst ? 'border-amber-500/50 bg-amber-950/30' : 'border-emerald-800/50 bg-emerald-950/40'}">
           <span class="text-sm font-bold w-8 text-center {isFirst ? 'text-amber-400' : 'text-emerald-500'}">

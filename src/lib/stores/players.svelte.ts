@@ -1,6 +1,6 @@
 import { storage } from './storage.svelte';
 import { generateId } from '$lib/utils';
-import type { KnownPlayer } from '$lib/types';
+import type { Player } from '$lib/types';
 
 export const playersStore = {
   get all() { return storage.knownPlayers; },
@@ -11,14 +11,14 @@ export const playersStore = {
     );
   },
 
-  getOrCreate(name: string, avatar: string, color: string): KnownPlayer {
+  getOrCreate(name: string, avatar: string, color: string): Player {
     const existing = this.findByName(name);
     if (existing) {
       const updated = { ...existing, avatar, color };
       storage.saveKnownPlayer(updated);
       return updated;
     }
-    const player: KnownPlayer = { id: generateId(), name, avatar, color };
+    const player: Player = { id: generateId(), name, avatar, color, createdAt: new Date().toISOString() };
     storage.saveKnownPlayer(player);
     return player;
   },

@@ -16,11 +16,13 @@ export const gameStore = {
   startGame(players: GamePlayer[], settings: GameSettings) {
     activeGame = {
       id: generateId(),
+      code: '',
       players,
       rounds: [],
       settings,
       status: 'in_progress',
       createdAt: new Date().toISOString(),
+      createdBy: '',
     };
     storage.saveGame(activeGame);
     return activeGame.id;
@@ -45,7 +47,7 @@ export const gameStore = {
 
     for (const player of activeGame.players) {
       if (player.eliminated) continue;
-      const pid = player.knownPlayerId;
+      const pid = player.playerId;
       let newTotal = (prevTotals[pid] ?? 0) + (appliedScores[pid] ?? 0);
 
       const halvedTotal = checkHalving(newTotal, activeGame.settings);
@@ -63,7 +65,8 @@ export const gameStore = {
     }
 
     const round: Round = {
-      number: activeGame.rounds.length + 1,
+      id: generateId(),
+      roundNumber: activeGame.rounds.length + 1,
       handValues,
       appliedScores,
       yanivCallerId,
@@ -71,7 +74,7 @@ export const gameStore = {
       wasAssafed,
       halvingEvents,
       eliminations,
-      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
 
     activeGame.rounds.push(round);
@@ -80,7 +83,7 @@ export const gameStore = {
     if (activePlayers.length <= 1) {
       activeGame.status = 'completed';
       activeGame.completedAt = new Date().toISOString();
-      activeGame.winnerId = activePlayers[0]?.knownPlayerId;
+      activeGame.winnerId = activePlayers[0]?.playerId;
     }
 
     storage.saveGame(activeGame);
@@ -122,7 +125,7 @@ export const gameStore = {
     const lastRound = activeGame.rounds.pop()!;
 
     for (const pid of lastRound.eliminations) {
-      const player = activeGame.players.find(p => p.knownPlayerId === pid);
+      const player = activeGame.players.find(p => p.playerId === pid);
       if (player) {
         player.eliminated = false;
         player.eliminatedAtRound = undefined;

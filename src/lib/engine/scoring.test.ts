@@ -66,14 +66,14 @@ describe('getRunningTotals', () => {
   it('sums applied scores across rounds', () => {
     const rounds: Round[] = [
       {
-        number: 1, handValues: { p1: 5, p2: 12 }, appliedScores: { p1: 0, p2: 12 },
+        id: 'r1', roundNumber: 1, handValues: { p1: 5, p2: 12 }, appliedScores: { p1: 0, p2: 12 },
         yanivCallerId: 'p1', wasAssafed: false, assafPlayerIds: [],
-        halvingEvents: [], eliminations: [], timestamp: '2026-01-01T00:00:00Z'
+        halvingEvents: [], eliminations: [], createdAt: '2026-01-01T00:00:00Z'
       },
       {
-        number: 2, handValues: { p1: 7, p2: 3 }, appliedScores: { p1: 7, p2: 0 },
+        id: 'r2', roundNumber: 2, handValues: { p1: 7, p2: 3 }, appliedScores: { p1: 7, p2: 0 },
         yanivCallerId: 'p2', wasAssafed: false, assafPlayerIds: [],
-        halvingEvents: [], eliminations: [], timestamp: '2026-01-01T00:01:00Z'
+        halvingEvents: [], eliminations: [], createdAt: '2026-01-01T00:01:00Z'
       }
     ];
     const totals = getRunningTotals(rounds);
@@ -85,7 +85,7 @@ describe('getRunningTotals', () => {
 describe('calculateRoundScores with multiple assafers', () => {
   const settings: GameSettings = {
     scoreLimit: 200, yanivThreshold: 5, halvingEnabled: true, halvingMultiple: 50,
-    assafEnabled: true, assafPenalty: 30, tableTimerEnabled: false, tableTimerSeconds: 60,
+    assafEnabled: true, assafPenalty: 30, autoAssaf: false, tableTimerEnabled: false, tableTimerSeconds: 60,
     jokersEnabled: true, variantName: 'Classic',
   };
 
@@ -122,14 +122,14 @@ describe('calculateRoundScores with multiple assafers', () => {
 describe('halving + running totals integration', () => {
   it('appliedScores adjusted for halving produce correct running totals', () => {
     const round1: Round = {
-      number: 1, handValues: { p1: 45 }, appliedScores: { p1: 45 },
+      id: 'r1', roundNumber: 1, handValues: { p1: 45 }, appliedScores: { p1: 45 },
       yanivCallerId: 'p2', wasAssafed: false, assafPlayerIds: [],
-      halvingEvents: [], eliminations: [], timestamp: '2026-01-01T00:00:00Z'
+      halvingEvents: [], eliminations: [], createdAt: '2026-01-01T00:00:00Z'
     };
     const round2: Round = {
-      number: 2, handValues: { p1: 5 }, appliedScores: { p1: -20 },
+      id: 'r2', roundNumber: 2, handValues: { p1: 5 }, appliedScores: { p1: -20 },
       yanivCallerId: 'p2', wasAssafed: false, assafPlayerIds: [],
-      halvingEvents: ['p1'], eliminations: [], timestamp: '2026-01-01T00:01:00Z'
+      halvingEvents: ['p1'], eliminations: [], createdAt: '2026-01-01T00:01:00Z'
     };
     const totals = getRunningTotals([round1, round2]);
     expect(totals.p1).toBe(25);
