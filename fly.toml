@@ -9,7 +9,7 @@ primary_region = 'lhr'
 [build]
 
 [deploy]
-  release_command = "node --import tsx migrations/run.ts"
+  release_command = "node migrations/run.mjs"
 
 [http_service]
   internal_port = 8080
