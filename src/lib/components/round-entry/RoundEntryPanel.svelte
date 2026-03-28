@@ -57,6 +57,7 @@
 
   const showAssafPicker = $derived(
     game.settings.assafEnabled &&
+    !game.settings.autoAssaf &&
     potentialAssafers().length > 0 &&
     !noAssaf &&
     assafPlayerId === null
@@ -68,8 +69,8 @@
       const val = parseInt(handValueStrings[p.playerId] ?? '', 10);
       if (isNaN(val) || val < 0) return false;
     }
-    // If assaf is enabled, require assaf resolution unless noAssaf
-    if (game.settings.assafEnabled && potentialAssafers().length > 0 && !noAssaf && assafPlayerId === null) {
+    // If assaf is enabled (and not auto-assaf), require assaf resolution unless noAssaf
+    if (game.settings.assafEnabled && !game.settings.autoAssaf && potentialAssafers().length > 0 && !noAssaf && assafPlayerId === null) {
       return false;
     }
     return true;

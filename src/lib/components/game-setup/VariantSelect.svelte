@@ -61,6 +61,12 @@
         <input type="checkbox" bind:checked={settings.assafEnabled} class="accent-amber-500" />
         Assaf rule
       </label>
+      {#if settings.assafEnabled}
+        <label class="flex items-center gap-2 text-emerald-300">
+          <input type="checkbox" bind:checked={settings.autoAssaf} class="accent-amber-500" />
+          Auto-Reveal Assaf
+        </label>
+      {/if}
       <label class="flex items-center gap-2 text-emerald-300">
         <input type="checkbox" bind:checked={settings.jokersEnabled} class="accent-amber-500" />
         Jokers (0 pts)
