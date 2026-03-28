@@ -6,8 +6,7 @@
   import VariantSelect from '$lib/components/game-setup/VariantSelect.svelte';
   import { VARIANT_CLASSIC, PLAYER_COLORS, PLAYER_AVATARS } from '$lib/constants';
   import { gameStore } from '$lib/stores/game.svelte';
-  import { playersStore } from '$lib/stores/players.svelte';
-  import type { GameSettings, GamePlayer } from '$lib/types';
+  import type { GameSettings } from '$lib/types';
 
   let players = $state([
     { name: '', avatar: PLAYER_AVATARS[0], color: PLAYER_COLORS[0] },
@@ -15,25 +14,30 @@
   ]);
 
   let settings = $state<GameSettings>({ ...VARIANT_CLASSIC });
+  let creating = $state(false);
+  let error = $state('');
 
-  function startGame() {
+  async function startGame() {
     const validPlayers = players.filter(p => p.name.trim());
     if (validPlayers.length < 2) return;
 
-    const gamePlayers: GamePlayer[] = validPlayers.map((p, i) => {
-      const known = playersStore.getOrCreate(p.name.trim(), p.avatar, p.color);
-      return {
-        playerId: known.id,
-        name: known.name,
-        avatar: known.avatar,
-        color: known.color,
-        eliminated: false,
-        displayOrder: i,
-      };
-    });
-
-    const gameId = gameStore.startGame(gamePlayers, settings);
-    goto(`/game/${gameId}`);
+    creating = true;
+    error = '';
+    try {
+      const game = await gameStore.createGame({
+        players: validPlayers.map(p => ({
+          name: p.name.trim(),
+          avatar: p.avatar,
+          color: p.color,
+        })),
+        settings,
+        createdByName: validPlayers[0].name.trim(),
+      });
+      goto(`/game/${game.code}`);
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to create game';
+      creating = false;
+    }
   }
 
   const canStart = $derived(players.filter(p => p.name.trim()).length >= 2);
@@ -52,11 +56,15 @@
     <VariantSelect bind:settings />
   </section>
 
+  {#if error}
+    <p class="text-destructive text-sm text-center">{error}</p>
+  {/if}
+
   <Button
     onclick={startGame}
-    disabled={!canStart}
+    disabled={!canStart || creating}
     class="w-full bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold text-lg py-6 shadow-lg shadow-amber-500/20 disabled:opacity-40"
   >
-    Start Game
+    {creating ? 'Creating...' : 'Start Game'}
   </Button>
 </div>

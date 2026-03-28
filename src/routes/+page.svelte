@@ -1,11 +1,19 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { Button } from '$lib/components/ui/button/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
-  import { storage } from '$lib/stores/storage.svelte';
+  import { api } from '$lib/stores/api';
+  import type { Game } from '$lib/types';
 
-  const inProgressGames = $derived(
-    storage.games.filter(g => g.status === 'in_progress')
-  );
+  let games = $state<Game[]>([]);
+
+  onMount(async () => {
+    try {
+      games = await api.games.list('in_progress');
+    } catch {
+      // Silently fail — no games to show
+    }
+  });
 </script>
 
 <div class="mx-auto max-w-lg px-4 pt-12 text-center">
@@ -38,10 +46,16 @@
       </Button>
     </a>
 
-    {#if inProgressGames.length > 0}
+    <a href="/join">
+      <Button variant="outline" class="w-full border-emerald-600 text-emerald-300 hover:bg-emerald-900/50 py-4 mt-2">
+        Join Game
+      </Button>
+    </a>
+
+    {#if games.length > 0}
       <p class="mt-5 text-emerald-500 text-sm uppercase tracking-wider">Or resume</p>
-      {#each inProgressGames as game}
-        <a href="/game/{game.id}">
+      {#each games as game}
+        <a href="/game/{game.code}">
           <Button variant="outline" class="w-full border-emerald-600 text-emerald-300 hover:bg-emerald-900/50 py-4">
             <span class="flex items-center justify-center gap-2">
               {#each game.players as player}

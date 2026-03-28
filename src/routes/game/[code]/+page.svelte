@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { Button } from '$lib/components/ui/button/index.js';
@@ -9,57 +9,81 @@
   import { gameStore } from '$lib/stores/game.svelte';
   import { audio } from '$lib/stores/audio.svelte';
   import TableTimer from '$lib/components/timer/TableTimer.svelte';
+  import type { AddRoundRequest } from '$lib/types';
 
   let showRoundEntry = $state(false);
   let notFound = $state(false);
+  let loading = $state(true);
   let showAbandonConfirm = $state(false);
   let editingRoundIndex = $state<number | null>(null);
   let pendingEditIndex = $state<number | null>(null);
 
-  const game = $derived(gameStore.active);
+  const game = $derived(gameStore.activeGame);
 
-  onMount(() => {
-    const id = $page.params.id;
-    // If active game matches, we're good; otherwise try loading
-    if (!gameStore.active || gameStore.active.id !== id) {
-      const found = gameStore.loadGame(id);
-      if (!found) {
+  onMount(async () => {
+    const code = $page.params.code!;
+    if (!gameStore.activeGame || gameStore.activeGame.code !== code) {
+      try {
+        const found = await gameStore.loadGame(code);
+        if (!found) {
+          notFound = true;
+        }
+      } catch {
         notFound = true;
       }
     }
+    loading = false;
   });
 
-  function handleRoundSubmit(
+  onDestroy(() => {
+    gameStore.cleanup();
+  });
+
+  async function handleRoundSubmit(
     handValues: Record<string, number>,
     yanivCallerId: string,
     assafPlayerIds: string[]
   ) {
     showRoundEntry = false;
-    const round = gameStore.addRound(handValues, yanivCallerId, assafPlayerIds);
+    try {
+      const req: AddRoundRequest = {
+        handValues,
+        yanivCallerId,
+        assafPlayerIds: assafPlayerIds.length > 0 ? assafPlayerIds : [],
+      };
+      await gameStore.addRound(req);
 
-    // Play sound effects based on round result
-    if (round) {
-      if (gameStore.active?.status === 'completed') {
-        audio.play('win');
-      } else if (round.wasAssafed) {
-        audio.play('assaf');
-      } else if (round.halvingEvents.length > 0) {
-        audio.play('halving');
-      } else if (round.eliminations.length > 0) {
-        audio.play('elimination');
-      } else {
-        audio.play('yaniv');
+      // Play sound effects based on latest round
+      const latestRound = gameStore.activeGame?.rounds.at(-1);
+      if (latestRound) {
+        if (gameStore.activeGame?.status === 'completed') {
+          audio.play('win');
+        } else if (latestRound.wasAssafed) {
+          audio.play('assaf');
+        } else if (latestRound.halvingEvents.length > 0) {
+          audio.play('halving');
+        } else if (latestRound.eliminations.length > 0) {
+          audio.play('elimination');
+        } else {
+          audio.play('yaniv');
+        }
       }
-    }
 
-    // Auto-navigate to results if game completed
-    if (gameStore.active?.status === 'completed') {
-      goto(`/game/${$page.params.id}/results`);
+      // Auto-navigate to results if game completed
+      if (gameStore.activeGame?.status === 'completed') {
+        goto(`/game/${gameStore.activeGame!.code}/results`);
+      }
+    } catch (e) {
+      console.error('Failed to add round:', e);
     }
   }
 
-  function handleUndo() {
-    gameStore.undoLastRound();
+  async function handleUndo() {
+    try {
+      await gameStore.undoLastRound();
+    } catch (e) {
+      console.error('Failed to undo round:', e);
+    }
   }
 
   function handleEditRoundRequest(roundIndex: number) {
@@ -74,25 +98,34 @@
     showRoundEntry = true;
   }
 
-  function handleEditSubmit(
+  async function handleEditSubmit(
     handValues: Record<string, number>,
     yanivCallerId: string,
     assafPlayerIds: string[]
   ) {
-    if (editingRoundIndex === null) return;
+    if (editingRoundIndex === null || !game) return;
     showRoundEntry = false;
-    gameStore.editRound(editingRoundIndex, handValues);
-    editingRoundIndex = null;
+    const round = game.rounds[editingRoundIndex];
+    try {
+      await gameStore.editRound(round.roundNumber, handValues);
+      editingRoundIndex = null;
 
-    if (gameStore.active?.status === 'completed') {
-      goto(`/game/${$page.params.id}/results`);
+      if (gameStore.activeGame?.status === 'completed') {
+        goto(`/game/${gameStore.activeGame!.code}/results`);
+      }
+    } catch (e) {
+      console.error('Failed to edit round:', e);
     }
   }
 
-  function handleAbandon() {
+  async function handleAbandon() {
     showAbandonConfirm = false;
-    gameStore.abandonGame();
-    goto('/');
+    try {
+      await gameStore.abandonGame();
+      goto('/');
+    } catch (e) {
+      console.error('Failed to abandon game:', e);
+    }
   }
 
   const activePlayerCount = $derived(game?.players.filter(p => !p.eliminated).length ?? 0);
@@ -124,11 +157,11 @@
 
     <!-- Scoreboard -->
     <div class="rounded-xl border border-emerald-800/50 bg-emerald-950/60 overflow-hidden">
-      <Scoreboard {game} onEditRound={game.status === 'in_progress' ? handleEditRoundRequest : undefined} />
+      <Scoreboard {game} onEditRound={game.status === 'in_progress' && !gameStore.isSpectator ? handleEditRoundRequest : undefined} />
     </div>
 
     <!-- Controls -->
-    {#if game.status === 'in_progress'}
+    {#if game.status === 'in_progress' && !gameStore.isSpectator}
       <div class="flex gap-3">
         <Button
           onclick={() => showRoundEntry = true}
@@ -157,13 +190,20 @@
           ✕
         </Button>
       </div>
-    {:else}
+    {:else if game.status !== 'in_progress'}
       <div class="text-center">
-        <a href="/game/{game.id}/results">
+        <a href="/game/{game.code}/results">
           <Button class="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold px-8">
             View Results
           </Button>
         </a>
+      </div>
+    {/if}
+
+    <!-- Spectator indicator -->
+    {#if gameStore.isSpectator}
+      <div class="text-center text-sm text-emerald-500/70">
+        Watching game · {gameStore.spectators.length} spectator{gameStore.spectators.length !== 1 ? 's' : ''}
       </div>
     {/if}
   </div>
@@ -237,7 +277,7 @@
       </div>
     </div>
   {/if}
-{:else}
+{:else if loading}
   <!-- Loading state -->
   <Header title="Loading..." showBack />
   <div class="mx-auto max-w-lg px-4 py-12 text-center">
