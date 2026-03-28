@@ -37,7 +37,7 @@ export interface Round {
   handValues: Record<string, number>;
   appliedScores: Record<string, number>;
   yanivCallerId: string;
-  assafPlayerId?: string;
+  assafPlayerIds: string[];
   wasAssafed: boolean;
   halvingEvents: string[];
   eliminations: string[];

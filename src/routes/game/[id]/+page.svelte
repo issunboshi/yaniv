@@ -32,10 +32,10 @@
   function handleRoundSubmit(
     handValues: Record<string, number>,
     yanivCallerId: string,
-    assafPlayerId?: string
+    assafPlayerIds: string[]
   ) {
     showRoundEntry = false;
-    const round = gameStore.addRound(handValues, yanivCallerId, assafPlayerId);
+    const round = gameStore.addRound(handValues, yanivCallerId, assafPlayerIds);
 
     // Play sound effects based on round result
     if (round) {
@@ -77,7 +77,7 @@
   function handleEditSubmit(
     handValues: Record<string, number>,
     yanivCallerId: string,
-    assafPlayerId?: string
+    assafPlayerIds: string[]
   ) {
     if (editingRoundIndex === null) return;
     showRoundEntry = false;

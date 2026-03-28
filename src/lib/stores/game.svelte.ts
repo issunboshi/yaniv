@@ -32,11 +32,11 @@ export const gameStore = {
     return !!game;
   },
 
-  addRound(handValues: Record<string, number>, yanivCallerId: string, assafPlayerId?: string) {
+  addRound(handValues: Record<string, number>, yanivCallerId: string, assafPlayerIds: string[] = []) {
     if (!activeGame) return;
 
     const { appliedScores, wasAssafed } = calculateRoundScores(
-      handValues, yanivCallerId, assafPlayerId, activeGame.settings
+      handValues, yanivCallerId, assafPlayerIds, activeGame.settings
     );
 
     const prevTotals = getRunningTotals(activeGame.rounds);
@@ -67,7 +67,7 @@ export const gameStore = {
       handValues,
       appliedScores,
       yanivCallerId,
-      assafPlayerId,
+      assafPlayerIds,
       wasAssafed,
       halvingEvents,
       eliminations,
@@ -94,7 +94,7 @@ export const gameStore = {
     const replayInputs = activeGame.rounds.map((r, i) => ({
       handValues: i === roundIndex ? newHandValues : { ...r.handValues },
       yanivCallerId: r.yanivCallerId,
-      assafPlayerId: r.assafPlayerId,
+      assafPlayerIds: r.assafPlayerIds,
     }));
 
     // Reset all rounds and player state
@@ -109,7 +109,7 @@ export const gameStore = {
 
     // Replay each round through normal addRound logic
     for (const input of replayInputs) {
-      this.addRound(input.handValues, input.yanivCallerId, input.assafPlayerId);
+      this.addRound(input.handValues, input.yanivCallerId, input.assafPlayerIds);
       if ((activeGame.status as string) === 'completed') break;
     }
 

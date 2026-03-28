@@ -13,17 +13,17 @@ function makeGame(overrides: Partial<Game> = {}): Game {
     rounds: [
       {
         number: 1, handValues: { kp1: 5, kp2: 12 }, appliedScores: { kp1: 0, kp2: 12 },
-        yanivCallerId: 'kp1', wasAssafed: false, halvingEvents: [], eliminations: [],
+        yanivCallerId: 'kp1', wasAssafed: false, assafPlayerIds: [], halvingEvents: [], eliminations: [],
         timestamp: '2026-01-01T00:00:00Z',
       },
       {
         number: 2, handValues: { kp1: 7, kp2: 3 }, appliedScores: { kp1: 7, kp2: 0 },
-        yanivCallerId: 'kp2', wasAssafed: false, halvingEvents: [], eliminations: [],
+        yanivCallerId: 'kp2', wasAssafed: false, assafPlayerIds: [], halvingEvents: [], eliminations: [],
         timestamp: '2026-01-01T00:01:00Z',
       },
       {
         number: 3, handValues: { kp1: 4, kp2: 6 }, appliedScores: { kp1: 0, kp2: 206 },
-        yanivCallerId: 'kp1', wasAssafed: false, halvingEvents: [], eliminations: ['kp2'],
+        yanivCallerId: 'kp1', wasAssafed: false, assafPlayerIds: [], halvingEvents: [], eliminations: ['kp2'],
         timestamp: '2026-01-01T00:02:00Z',
       },
     ],

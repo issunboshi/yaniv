@@ -49,7 +49,7 @@ export function derivePlayerStats(games: Game[]): PlayerStats[] {
             stat.timesAssafed++;
           }
         }
-        if (round.assafPlayerId === player.knownPlayerId) {
+        if (round.assafPlayerIds.includes(player.knownPlayerId)) {
           stat.timesPerformedAssaf++;
         }
         if (round.halvingEvents.includes(player.knownPlayerId)) {

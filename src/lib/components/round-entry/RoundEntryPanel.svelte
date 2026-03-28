@@ -7,7 +7,7 @@
   interface Props {
     game: Game;
     editingRound?: Round;
-    onSubmit: (handValues: Record<string, number>, yanivCallerId: string, assafPlayerId?: string) => void;
+    onSubmit: (handValues: Record<string, number>, yanivCallerId: string, assafPlayerIds: string[]) => void;
     onClose: () => void;
   }
 
@@ -36,8 +36,8 @@
 
     if (editingRound) {
       yanivCallerId = editingRound.yanivCallerId;
-      assafPlayerId = editingRound.assafPlayerId ?? null;
-      noAssaf = editingRound.wasAssafed ? false : !editingRound.assafPlayerId;
+      assafPlayerId = editingRound.assafPlayerIds[0] ?? null;
+      noAssaf = editingRound.wasAssafed ? false : editingRound.assafPlayerIds.length === 0;
     }
   });
 
@@ -83,7 +83,7 @@
       handValues[p.knownPlayerId] = parseInt(handValueStrings[p.knownPlayerId] ?? '0', 10);
     }
 
-    onSubmit(handValues, yanivCallerId, assafPlayerId ?? undefined);
+    onSubmit(handValues, yanivCallerId, assafPlayerId ? [assafPlayerId] : []);
     resetState();
   }
 

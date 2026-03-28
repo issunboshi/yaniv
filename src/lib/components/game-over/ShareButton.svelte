@@ -42,8 +42,8 @@
     // Highlights
     const highlights: string[] = [];
     for (const round of game.rounds) {
-      if (round.wasAssafed && round.assafPlayerId) {
-        const assafer = game.players.find(p => p.knownPlayerId === round.assafPlayerId);
+      if (round.wasAssafed && round.assafPlayerIds.length > 0) {
+        const assafer = game.players.find(p => p.knownPlayerId === round.assafPlayerIds[0]);
         const caller = game.players.find(p => p.knownPlayerId === round.yanivCallerId);
         if (assafer && caller) {
           highlights.push(`⚡ Round ${round.number}: ${assafer.avatar} ${assafer.name} Assaf'd ${caller.avatar} ${caller.name}!`);

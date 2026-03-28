@@ -32,7 +32,7 @@
     const round = game.rounds[roundIndex];
     const appliedScore = round.appliedScores[playerId];
     const isYanivCaller = round.yanivCallerId === playerId;
-    const isAssafer = round.assafPlayerId === playerId;
+    const isAssafer = round.assafPlayerIds.includes(playerId);
     const isEliminated = round.eliminations.includes(playerId);
     const isHalved = round.halvingEvents.includes(playerId);
 
