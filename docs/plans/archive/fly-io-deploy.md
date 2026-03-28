@@ -1,6 +1,6 @@
 # Deploy to Fly.io
 
-## Status: In Progress
+## Status: Implemented
 
 ## Purpose
 Deploy the Yaniv score tracker SPA to Fly.io for public access.
