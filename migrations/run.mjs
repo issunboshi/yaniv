@@ -1,4 +1,7 @@
 import postgres from 'postgres';
+import { readdirSync, readFileSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -16,11 +19,9 @@ async function run() {
     )
   `;
 
-  const fs = await import('fs');
-  const path = await import('path');
-  const dir = path.dirname(new URL(import.meta.url).pathname);
-  const files = fs.readdirSync(dir)
-    .filter((f: string) => f.endsWith('.sql'))
+  const dir = dirname(fileURLToPath(import.meta.url));
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith('.sql'))
     .sort();
 
   for (const file of files) {
@@ -30,7 +31,7 @@ async function run() {
       continue;
     }
 
-    const content = fs.readFileSync(path.join(dir, file), 'utf-8');
+    const content = readFileSync(join(dir, file), 'utf-8');
     console.log(`  apply: ${file}`);
     await sql.begin(async (tx) => {
       await tx.unsafe(content);
