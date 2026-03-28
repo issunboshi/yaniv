@@ -7,9 +7,10 @@ CREATE TABLE players (
   name text NOT NULL,
   avatar text NOT NULL DEFAULT '🃏',
   color text NOT NULL DEFAULT '#e74c3c',
-  created_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT players_name_unique UNIQUE (lower(name))
+  created_at timestamptz NOT NULL DEFAULT now()
 );
+
+CREATE UNIQUE INDEX players_name_unique ON players (lower(name));
 
 CREATE TABLE games (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
