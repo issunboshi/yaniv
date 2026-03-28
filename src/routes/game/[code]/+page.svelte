@@ -78,14 +78,6 @@
     }
   }
 
-  async function handleUndo() {
-    try {
-      await gameStore.undoLastRound();
-    } catch (e) {
-      console.error('Failed to undo round:', e);
-    }
-  }
-
   function handleEditRoundRequest(roundIndex: number) {
     if (!game || game.status !== 'in_progress') return;
     pendingEditIndex = roundIndex;
@@ -170,24 +162,12 @@
           + Add Round
         </Button>
 
-        {#if roundCount > 0}
-          <Button
-            variant="outline"
-            onclick={handleUndo}
-            class="border-emerald-700 text-emerald-400 hover:bg-emerald-900/50 px-4"
-            title="Undo last round"
-          >
-            ↩
-          </Button>
-        {/if}
-
         <Button
           variant="outline"
           onclick={() => showAbandonConfirm = true}
           class="border-red-800/50 text-red-400/70 hover:bg-red-950/30 hover:text-red-400 px-4"
-          title="Abandon game"
         >
-          ✕
+          Abandon Game
         </Button>
       </div>
     {:else if game.status !== 'in_progress'}
