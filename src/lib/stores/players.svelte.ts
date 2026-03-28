@@ -1,25 +1,22 @@
-import { storage } from './storage.svelte';
-import { generateId } from '$lib/utils';
-import type { KnownPlayer } from '$lib/types';
+import { api } from './api';
+import type { Player } from '$lib/types';
+
+let knownPlayers = $state<Player[]>([]);
 
 export const playersStore = {
-  get all() { return storage.knownPlayers; },
+  get all() { return knownPlayers; },
 
-  findByName(name: string) {
-    return storage.knownPlayers.find(
-      p => p.name.toLowerCase() === name.toLowerCase()
-    );
+  async load() {
+    knownPlayers = await api.players.list();
   },
 
-  getOrCreate(name: string, avatar: string, color: string): KnownPlayer {
-    const existing = this.findByName(name);
-    if (existing) {
-      const updated = { ...existing, avatar, color };
-      storage.saveKnownPlayer(updated);
-      return updated;
-    }
-    const player: KnownPlayer = { id: generateId(), name, avatar, color };
-    storage.saveKnownPlayer(player);
+  async getOrCreate(name: string, avatar: string, color: string): Promise<Player> {
+    const player = await api.players.create(name, avatar, color);
+    await this.load();
     return player;
+  },
+
+  findByName(name: string): Player | undefined {
+    return knownPlayers.find(p => p.name.toLowerCase() === name.toLowerCase());
   },
 };

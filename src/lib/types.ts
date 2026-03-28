@@ -1,19 +1,14 @@
-export interface StorageEnvelope {
-  schemaVersion: number;
-  knownPlayers: KnownPlayer[];
-  games: Game[];
-  appSettings: AppSettings;
-}
-
-export interface KnownPlayer {
+export interface Player {
   id: string;
   name: string;
   avatar: string;
   color: string;
+  createdAt: string;
 }
 
 export interface Game {
   id: string;
+  code: string;
   players: GamePlayer[];
   rounds: Round[];
   settings: GameSettings;
@@ -21,27 +16,30 @@ export interface Game {
   createdAt: string;
   completedAt?: string;
   winnerId?: string;
+  createdBy: string;
 }
 
 export interface GamePlayer {
-  knownPlayerId: string;
+  playerId: string;
   name: string;
   avatar: string;
   color: string;
   eliminated: boolean;
   eliminatedAtRound?: number;
+  displayOrder: number;
 }
 
 export interface Round {
-  number: number;
+  id: string;
+  roundNumber: number;
   handValues: Record<string, number>;
   appliedScores: Record<string, number>;
   yanivCallerId: string;
-  assafPlayerId?: string;
+  assafPlayerIds: string[];
   wasAssafed: boolean;
   halvingEvents: string[];
   eliminations: string[];
-  timestamp: string;
+  createdAt: string;
 }
 
 export interface GameSettings {
@@ -51,6 +49,7 @@ export interface GameSettings {
   halvingMultiple: number;
   assafEnabled: boolean;
   assafPenalty: number;
+  autoAssaf: boolean;
   tableTimerEnabled: boolean;
   tableTimerSeconds: number;
   jokersEnabled: boolean;
@@ -65,7 +64,7 @@ export interface AppSettings {
 }
 
 export interface PlayerStats {
-  knownPlayerId: string;
+  playerId: string;
   name: string;
   avatar: string;
   gamesPlayed: number;
@@ -77,4 +76,40 @@ export interface PlayerStats {
   averageFinalScore: number;
   halvingEvents: number;
   bestComeback: number;
+}
+
+export interface Spectator {
+  id: string;
+  playerId?: string;
+  playerName?: string;
+  connectedAt: string;
+}
+
+export type GameEvent =
+  | { type: 'round_added'; round: Round; game: Game }
+  | { type: 'round_edited'; game: Game }
+  | { type: 'round_undone'; game: Game }
+  | { type: 'game_completed'; game: Game }
+  | { type: 'game_abandoned'; game: Game }
+  | { type: 'spectator_joined'; spectator: Spectator }
+  | { type: 'spectator_left'; spectatorId: string };
+
+export interface CreateGameRequest {
+  players: { name: string; avatar: string; color: string }[];
+  settings: GameSettings;
+  createdByName: string;
+}
+
+export interface AddRoundRequest {
+  handValues: Record<string, number>;
+  yanivCallerId: string;
+  assafPlayerIds?: string[];
+}
+
+export interface EditRoundRequest {
+  handValues: Record<string, number>;
+}
+
+export interface JoinGameRequest {
+  playerId?: string;
 }

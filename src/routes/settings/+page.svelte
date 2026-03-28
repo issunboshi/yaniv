@@ -2,15 +2,12 @@
   import Header from '$lib/components/layout/Header.svelte';
   import { Input } from '$lib/components/ui/input/index.js';
   import { settingsStore } from '$lib/stores/settings.svelte';
-  import { storage } from '$lib/stores/storage.svelte';
   import { VARIANTS, VARIANT_CLASSIC } from '$lib/constants';
   import type { GameSettings } from '$lib/types';
 
   // Local reactive copy of defaults
   let defaults = $state<GameSettings>({ ...settingsStore.current.defaultGameSettings });
   let selectedVariant = $state<string>(settingsStore.current.defaultGameSettings.variantName ?? 'Classic');
-  let clearConfirm1 = $state(false);
-  let clearConfirm2 = $state(false);
 
   function selectVariant(name: string) {
     selectedVariant = name;
@@ -37,27 +34,10 @@
     settingsStore.setTheme(theme);
   }
 
-  function initiateClearAll() {
-    clearConfirm1 = true;
-    clearConfirm2 = false;
-  }
-
-  function confirmClearStep2() {
-    clearConfirm2 = true;
-  }
-
-  function executeClearAll() {
-    storage.clearAll();
-    clearConfirm1 = false;
-    clearConfirm2 = false;
-    // Reset local defaults too
+  function resetDefaults() {
     defaults = { ...VARIANT_CLASSIC };
     selectedVariant = 'Classic';
-  }
-
-  function cancelClear() {
-    clearConfirm1 = false;
-    clearConfirm2 = false;
+    settingsStore.updateDefaults(defaults);
   }
 </script>
 
@@ -213,7 +193,7 @@
             ? 'bg-amber-500 text-emerald-950 shadow-lg shadow-amber-500/20'
             : 'bg-emerald-900/40 text-emerald-300 border border-emerald-700 hover:bg-emerald-900/60'}"
         >
-          🌙 Dark
+          Dark
         </button>
         <button
           onclick={() => handleTheme('light')}
@@ -221,66 +201,28 @@
             ? 'bg-amber-500 text-emerald-950 shadow-lg shadow-amber-500/20'
             : 'bg-emerald-900/40 text-emerald-300 border border-emerald-700 hover:bg-emerald-900/60'}"
         >
-          ☀️ Light
+          Light
         </button>
       </div>
     </div>
   </section>
 
-  <!-- Danger Zone -->
+  <!-- Reset defaults -->
   <section>
-    <h2 class="text-xs font-semibold text-red-500 uppercase tracking-wider mb-3">Danger Zone</h2>
-    <div class="rounded-xl border border-red-800/50 bg-red-950/30 p-4">
-      {#if !clearConfirm1}
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-red-300">Clear All Data</p>
-            <p class="text-xs text-red-500 mt-0.5">Permanently deletes all games, players, and settings.</p>
-          </div>
-          <button
-            onclick={initiateClearAll}
-            class="rounded-lg px-3 py-2 text-sm font-medium bg-red-900/60 text-red-300 border border-red-700/50 hover:bg-red-900/80 transition-colors"
-          >
-            Clear All
-          </button>
+    <h2 class="text-xs font-semibold text-emerald-500 uppercase tracking-wider mb-3">Reset</h2>
+    <div class="rounded-xl border border-emerald-800/50 bg-emerald-950/30 p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-emerald-300">Reset Game Defaults</p>
+          <p class="text-xs text-emerald-600 mt-0.5">Resets default game settings to Classic variant.</p>
         </div>
-      {:else if !clearConfirm2}
-        <div class="space-y-3">
-          <p class="text-sm text-red-300">Are you sure? This cannot be undone.</p>
-          <div class="flex gap-2">
-            <button
-              onclick={confirmClearStep2}
-              class="flex-1 rounded-lg px-3 py-2 text-sm font-medium bg-red-700/70 text-red-200 hover:bg-red-700/90 transition-colors"
-            >
-              Yes, continue
-            </button>
-            <button
-              onclick={cancelClear}
-              class="flex-1 rounded-lg px-3 py-2 text-sm font-medium bg-emerald-900/60 text-emerald-300 border border-emerald-700 hover:bg-emerald-900/80 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      {:else}
-        <div class="space-y-3">
-          <p class="text-sm font-semibold text-red-300">Final confirmation — delete everything?</p>
-          <div class="flex gap-2">
-            <button
-              onclick={executeClearAll}
-              class="flex-1 rounded-lg px-3 py-2 text-sm font-bold bg-red-600 text-white hover:bg-red-500 transition-colors"
-            >
-              Delete All Data
-            </button>
-            <button
-              onclick={cancelClear}
-              class="flex-1 rounded-lg px-3 py-2 text-sm font-medium bg-emerald-900/60 text-emerald-300 border border-emerald-700 hover:bg-emerald-900/80 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      {/if}
+        <button
+          onclick={resetDefaults}
+          class="rounded-lg px-3 py-2 text-sm font-medium bg-emerald-900/60 text-emerald-300 border border-emerald-700/50 hover:bg-emerald-900/80 transition-colors"
+        >
+          Reset
+        </button>
+      </div>
     </div>
   </section>
 

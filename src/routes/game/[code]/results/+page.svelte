@@ -7,17 +7,23 @@
   import { gameStore } from '$lib/stores/game.svelte';
 
   let notFound = $state(false);
+  let loading = $state(true);
 
-  const game = $derived(gameStore.active);
+  const game = $derived(gameStore.activeGame);
 
-  onMount(() => {
-    const id = $page.params.id;
-    if (!gameStore.active || gameStore.active.id !== id) {
-      const found = gameStore.loadGame(id);
-      if (!found) {
+  onMount(async () => {
+    const code = $page.params.code!;
+    if (!gameStore.activeGame || gameStore.activeGame.code !== code) {
+      try {
+        const found = await gameStore.loadGame(code);
+        if (!found) {
+          notFound = true;
+        }
+      } catch {
         notFound = true;
       }
     }
+    loading = false;
   });
 </script>
 
@@ -32,7 +38,7 @@
 {:else if game}
   <Header title="Game Over" showBack />
   <ResultsScreen {game} />
-{:else}
+{:else if loading}
   <Header title="Loading..." showBack />
   <div class="mx-auto max-w-lg px-4 py-12 text-center">
     <p class="text-emerald-500">Loading results...</p>

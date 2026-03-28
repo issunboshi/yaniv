@@ -13,16 +13,16 @@ export interface RoundResult {
 export function calculateRoundScores(
   handValues: Record<string, number>,
   yanivCallerId: string,
-  assafPlayerId: string | undefined,
+  assafPlayerIds: string[],
   settings: GameSettings
 ): RoundResult {
   const appliedScores: Record<string, number> = {};
-  const wasAssafed = settings.assafEnabled && assafPlayerId !== undefined;
+  const wasAssafed = settings.assafEnabled && assafPlayerIds.length > 0;
 
   for (const [playerId, handValue] of Object.entries(handValues)) {
     if (wasAssafed && playerId === yanivCallerId) {
       appliedScores[playerId] = handValue + settings.assafPenalty;
-    } else if (wasAssafed && playerId === assafPlayerId) {
+    } else if (wasAssafed && assafPlayerIds.includes(playerId)) {
       appliedScores[playerId] = 0;
     } else if (!wasAssafed && playerId === yanivCallerId) {
       appliedScores[playerId] = 0;

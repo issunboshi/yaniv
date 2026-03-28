@@ -7,7 +7,7 @@
   interface Props {
     game: Game;
     editingRound?: Round;
-    onSubmit: (handValues: Record<string, number>, yanivCallerId: string, assafPlayerId?: string) => void;
+    onSubmit: (handValues: Record<string, number>, yanivCallerId: string, assafPlayerIds: string[]) => void;
     onClose: () => void;
   }
 
@@ -15,7 +15,7 @@
 
   const activePlayers = $derived(
     editingRound
-      ? game.players.filter(p => p.knownPlayerId in editingRound.handValues)
+      ? game.players.filter(p => p.playerId in editingRound.handValues)
       : game.players.filter(p => !p.eliminated)
   );
 
@@ -28,16 +28,16 @@
   $effect(() => {
     const initial: Record<string, string> = {};
     for (const p of activePlayers) {
-      initial[p.knownPlayerId] = editingRound
-        ? String(editingRound.handValues[p.knownPlayerId] ?? '')
+      initial[p.playerId] = editingRound
+        ? String(editingRound.handValues[p.playerId] ?? '')
         : '';
     }
     handValueStrings = initial;
 
     if (editingRound) {
       yanivCallerId = editingRound.yanivCallerId;
-      assafPlayerId = editingRound.assafPlayerId ?? null;
-      noAssaf = editingRound.wasAssafed ? false : !editingRound.assafPlayerId;
+      assafPlayerId = editingRound.assafPlayerIds[0] ?? null;
+      noAssaf = editingRound.wasAssafed ? false : editingRound.assafPlayerIds.length === 0;
     }
   });
 
@@ -48,8 +48,8 @@
     if (isNaN(callerHand)) return [];
 
     return activePlayers.filter(p => {
-      if (p.knownPlayerId === yanivCallerId) return false;
-      const handStr = handValueStrings[p.knownPlayerId];
+      if (p.playerId === yanivCallerId) return false;
+      const handStr = handValueStrings[p.playerId];
       const hand = parseInt(handStr ?? '', 10);
       return !isNaN(hand) && hand <= callerHand;
     });
@@ -57,6 +57,7 @@
 
   const showAssafPicker = $derived(
     game.settings.assafEnabled &&
+    !game.settings.autoAssaf &&
     potentialAssafers().length > 0 &&
     !noAssaf &&
     assafPlayerId === null
@@ -65,11 +66,11 @@
   const canSubmit = $derived(() => {
     if (!yanivCallerId) return false;
     for (const p of activePlayers) {
-      const val = parseInt(handValueStrings[p.knownPlayerId] ?? '', 10);
+      const val = parseInt(handValueStrings[p.playerId] ?? '', 10);
       if (isNaN(val) || val < 0) return false;
     }
-    // If assaf is enabled, require assaf resolution unless noAssaf
-    if (game.settings.assafEnabled && potentialAssafers().length > 0 && !noAssaf && assafPlayerId === null) {
+    // If assaf is enabled (and not auto-assaf), require assaf resolution unless noAssaf
+    if (game.settings.assafEnabled && !game.settings.autoAssaf && potentialAssafers().length > 0 && !noAssaf && assafPlayerId === null) {
       return false;
     }
     return true;
@@ -80,10 +81,10 @@
 
     const handValues: Record<string, number> = {};
     for (const p of activePlayers) {
-      handValues[p.knownPlayerId] = parseInt(handValueStrings[p.knownPlayerId] ?? '0', 10);
+      handValues[p.playerId] = parseInt(handValueStrings[p.playerId] ?? '0', 10);
     }
 
-    onSubmit(handValues, yanivCallerId, assafPlayerId ?? undefined);
+    onSubmit(handValues, yanivCallerId, assafPlayerId ? [assafPlayerId] : []);
     resetState();
   }
 
@@ -126,7 +127,7 @@
     </div>
 
     <h2 class="text-lg font-bold text-amber-400 text-center">
-      {editingRound ? `Edit Round ${editingRound.number}` : 'Record Round'}
+      {editingRound ? `Edit Round ${editingRound.roundNumber}` : 'Record Round'}
     </h2>
 
     <!-- Yaniv caller selection -->
@@ -144,9 +145,9 @@
           {#each activePlayers as player}
             <div class="flex items-center gap-3">
               <span class="text-xl w-8 text-center">{player.avatar}</span>
-              <span class="flex-1 text-sm text-emerald-200 {player.knownPlayerId === yanivCallerId ? 'text-amber-300 font-semibold' : ''}">
+              <span class="flex-1 text-sm text-emerald-200 {player.playerId === yanivCallerId ? 'text-amber-300 font-semibold' : ''}">
                 {player.name}
-                {#if player.knownPlayerId === yanivCallerId}
+                {#if player.playerId === yanivCallerId}
                   <span class="ml-1 text-xs text-amber-500">(Yaniv)</span>
                 {/if}
               </span>
@@ -154,9 +155,9 @@
                 type="number"
                 min="0"
                 placeholder="0"
-                value={handValueStrings[player.knownPlayerId] ?? ''}
+                value={handValueStrings[player.playerId] ?? ''}
                 oninput={(e) => {
-                  handValueStrings[player.knownPlayerId] = (e.target as HTMLInputElement).value;
+                  handValueStrings[player.playerId] = (e.target as HTMLInputElement).value;
                   // Reset assaf state when values change
                   assafPlayerId = null;
                   noAssaf = false;
@@ -177,7 +178,7 @@
           {#each potentialAssafers() as player}
             <button
               type="button"
-              onclick={() => assafPlayerId = player.knownPlayerId}
+              onclick={() => assafPlayerId = player.playerId}
               class="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-500 bg-red-950/50 text-red-300 hover:bg-red-900/50 transition-all"
             >
               <span class="text-xl">{player.avatar}</span>
@@ -197,7 +198,7 @@
 
     <!-- Assaf confirmed indicator -->
     {#if assafPlayerId}
-      {@const assafer = activePlayers.find(p => p.knownPlayerId === assafPlayerId)}
+      {@const assafer = activePlayers.find(p => p.playerId === assafPlayerId)}
       {#if assafer}
         <div class="rounded-lg border border-amber-500/50 bg-amber-950/30 px-4 py-2 flex items-center gap-2">
           <span class="text-base">{assafer.avatar}</span>

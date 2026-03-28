@@ -22,7 +22,7 @@
     // Sort: non-eliminated by score (ascending), then eliminated by round
     const sorted = [...game.players].sort((a, b) => {
       if (!a.eliminated && !b.eliminated) {
-        return (totals[a.knownPlayerId] ?? 0) - (totals[b.knownPlayerId] ?? 0);
+        return (totals[a.playerId] ?? 0) - (totals[b.playerId] ?? 0);
       }
       if (a.eliminated && !b.eliminated) return 1;
       if (!a.eliminated && b.eliminated) return -1;
@@ -35,24 +35,24 @@
       const pos = ordinal(i + 1);
       const score = player.eliminated
         ? `OUT (round ${player.eliminatedAtRound})`
-        : `${totals[player.knownPlayerId] ?? 0}/${limit}`;
+        : `${totals[player.playerId] ?? 0}/${limit}`;
       lines.push(`${pos} ${player.avatar} ${player.name} — ${score}`);
     });
 
     // Highlights
     const highlights: string[] = [];
     for (const round of game.rounds) {
-      if (round.wasAssafed && round.assafPlayerId) {
-        const assafer = game.players.find(p => p.knownPlayerId === round.assafPlayerId);
-        const caller = game.players.find(p => p.knownPlayerId === round.yanivCallerId);
+      if (round.wasAssafed && round.assafPlayerIds.length > 0) {
+        const assafer = game.players.find(p => p.playerId === round.assafPlayerIds[0]);
+        const caller = game.players.find(p => p.playerId === round.yanivCallerId);
         if (assafer && caller) {
-          highlights.push(`⚡ Round ${round.number}: ${assafer.avatar} ${assafer.name} Assaf'd ${caller.avatar} ${caller.name}!`);
+          highlights.push(`⚡ Round ${round.roundNumber}: ${assafer.avatar} ${assafer.name} Assaf'd ${caller.avatar} ${caller.name}!`);
         }
       }
       for (const pid of round.halvingEvents) {
-        const player = game.players.find(p => p.knownPlayerId === pid);
+        const player = game.players.find(p => p.playerId === pid);
         if (player) {
-          highlights.push(`✂️ Round ${round.number}: ${player.avatar} ${player.name} score halved!`);
+          highlights.push(`✂️ Round ${round.roundNumber}: ${player.avatar} ${player.name} score halved!`);
         }
       }
     }

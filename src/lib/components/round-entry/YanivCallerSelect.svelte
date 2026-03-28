@@ -18,9 +18,9 @@
     {#each activePlayers as player}
       <button
         type="button"
-        onclick={() => onSelect(player.knownPlayerId)}
+        onclick={() => onSelect(player.playerId)}
         class="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all
-          {selectedId === player.knownPlayerId
+          {selectedId === player.playerId
             ? 'border-amber-400 bg-amber-400/20 text-amber-300'
             : 'border-emerald-700 bg-emerald-900/40 text-emerald-200 hover:border-emerald-500'}"
       >

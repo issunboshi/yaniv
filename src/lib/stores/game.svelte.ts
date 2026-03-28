@@ -1,147 +1,120 @@
-import { storage } from './storage.svelte';
-import { calculateRoundScores, checkHalving, checkElimination, getRunningTotals } from '$lib/engine/scoring';
-import { generateId } from '$lib/utils';
-import type { Game, GamePlayer, GameSettings, Round } from '$lib/types';
+import { api } from './api';
+import { getRunningTotals } from '$lib/engine/scoring';
+import type { Game, GameEvent, CreateGameRequest, AddRoundRequest, Spectator } from '$lib/types';
 
 let activeGame = $state<Game | null>(null);
+let spectators = $state<Spectator[]>([]);
+let eventSource: EventSource | null = null;
+let spectatorId: string | null = null;
+let isSpectator = $state(false);
+
+function connectSSE(code: string) {
+  disconnectSSE();
+  eventSource = api.stream(code);
+
+  eventSource.onmessage = (event) => {
+    const data: GameEvent = JSON.parse(event.data);
+
+    switch (data.type) {
+      case 'round_added':
+      case 'round_edited':
+      case 'round_undone':
+      case 'game_completed':
+      case 'game_abandoned':
+        activeGame = data.game;
+        break;
+      case 'spectator_joined':
+        spectators = [...spectators, data.spectator];
+        break;
+      case 'spectator_left':
+        spectators = spectators.filter(s => s.id !== data.spectatorId);
+        break;
+    }
+  };
+}
+
+function disconnectSSE() {
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
+  }
+}
 
 export const gameStore = {
-  get active() { return activeGame; },
+  get activeGame() { return activeGame; },
+  get spectators() { return spectators; },
+  get isSpectator() { return isSpectator; },
 
-  get runningTotals() {
+  get activePlayers() {
+    if (!activeGame) return [];
+    return activeGame.players.filter(p => !p.eliminated);
+  },
+
+  get runningTotals(): Record<string, number> {
     if (!activeGame) return {};
     return getRunningTotals(activeGame.rounds);
   },
 
-  startGame(players: GamePlayer[], settings: GameSettings) {
-    activeGame = {
-      id: generateId(),
-      players,
-      rounds: [],
-      settings,
-      status: 'in_progress',
-      createdAt: new Date().toISOString(),
-    };
-    storage.saveGame(activeGame);
-    return activeGame.id;
+  async createGame(req: CreateGameRequest): Promise<Game> {
+    const game = await api.games.create(req);
+    activeGame = game;
+    isSpectator = false;
+    connectSSE(game.code);
+    return game;
   },
 
-  loadGame(gameId: string) {
-    const game = storage.games.find(g => g.id === gameId);
-    if (game) activeGame = game;
-    return !!game;
+  async loadGame(code: string): Promise<Game | null> {
+    const game = await api.games.get(code);
+    activeGame = game;
+    isSpectator = false;
+    connectSSE(code);
+    return game;
   },
 
-  addRound(handValues: Record<string, number>, yanivCallerId: string, assafPlayerId?: string) {
+  async joinAsSpectator(code: string, playerId?: string): Promise<void> {
+    const game = await api.games.get(code);
+    activeGame = game;
+    isSpectator = true;
+    const spectator = await api.spectators.join(code, playerId);
+    spectatorId = spectator.id;
+    connectSSE(code);
+  },
+
+  async addRound(req: AddRoundRequest): Promise<void> {
     if (!activeGame) return;
-
-    const { appliedScores, wasAssafed } = calculateRoundScores(
-      handValues, yanivCallerId, assafPlayerId, activeGame.settings
-    );
-
-    const prevTotals = getRunningTotals(activeGame.rounds);
-    const halvingEvents: string[] = [];
-    const eliminations: string[] = [];
-
-    for (const player of activeGame.players) {
-      if (player.eliminated) continue;
-      const pid = player.knownPlayerId;
-      let newTotal = (prevTotals[pid] ?? 0) + (appliedScores[pid] ?? 0);
-
-      const halvedTotal = checkHalving(newTotal, activeGame.settings);
-      if (halvedTotal !== newTotal) {
-        halvingEvents.push(pid);
-        appliedScores[pid] = halvedTotal - (prevTotals[pid] ?? 0);
-        newTotal = halvedTotal;
-      }
-
-      if (checkElimination(newTotal, activeGame.settings)) {
-        eliminations.push(pid);
-        player.eliminated = true;
-        player.eliminatedAtRound = activeGame.rounds.length + 1;
-      }
-    }
-
-    const round: Round = {
-      number: activeGame.rounds.length + 1,
-      handValues,
-      appliedScores,
-      yanivCallerId,
-      assafPlayerId,
-      wasAssafed,
-      halvingEvents,
-      eliminations,
-      timestamp: new Date().toISOString(),
-    };
-
-    activeGame.rounds.push(round);
-
-    const activePlayers = activeGame.players.filter(p => !p.eliminated);
-    if (activePlayers.length <= 1) {
-      activeGame.status = 'completed';
-      activeGame.completedAt = new Date().toISOString();
-      activeGame.winnerId = activePlayers[0]?.knownPlayerId;
-    }
-
-    storage.saveGame(activeGame);
-    return round;
+    activeGame = await api.rounds.add(activeGame.code, req);
   },
 
-  editRound(roundIndex: number, newHandValues: Record<string, number>) {
-    if (!activeGame || roundIndex < 0 || roundIndex >= activeGame.rounds.length) return;
-
-    // Collect replay inputs: update target round's hand values, keep caller/assaf the same
-    const replayInputs = activeGame.rounds.map((r, i) => ({
-      handValues: i === roundIndex ? newHandValues : { ...r.handValues },
-      yanivCallerId: r.yanivCallerId,
-      assafPlayerId: r.assafPlayerId,
-    }));
-
-    // Reset all rounds and player state
-    activeGame.rounds = [];
-    for (const player of activeGame.players) {
-      player.eliminated = false;
-      player.eliminatedAtRound = undefined;
-    }
-    activeGame.status = 'in_progress';
-    activeGame.completedAt = undefined;
-    activeGame.winnerId = undefined;
-
-    // Replay each round through normal addRound logic
-    for (const input of replayInputs) {
-      this.addRound(input.handValues, input.yanivCallerId, input.assafPlayerId);
-      if ((activeGame.status as string) === 'completed') break;
-    }
-
-    storage.saveGame(activeGame);
-  },
-
-  undoLastRound() {
-    if (!activeGame || activeGame.rounds.length === 0) return;
-
-    const lastRound = activeGame.rounds.pop()!;
-
-    for (const pid of lastRound.eliminations) {
-      const player = activeGame.players.find(p => p.knownPlayerId === pid);
-      if (player) {
-        player.eliminated = false;
-        player.eliminatedAtRound = undefined;
-      }
-    }
-
-    if (activeGame.status === 'completed') {
-      activeGame.status = 'in_progress';
-      activeGame.completedAt = undefined;
-      activeGame.winnerId = undefined;
-    }
-
-    storage.saveGame(activeGame);
-  },
-
-  abandonGame() {
+  async editRound(roundNumber: number, handValues: Record<string, number>): Promise<void> {
     if (!activeGame) return;
-    activeGame.status = 'abandoned';
-    activeGame.completedAt = new Date().toISOString();
-    storage.saveGame(activeGame);
+    activeGame = await api.rounds.edit(activeGame.code, roundNumber, handValues);
+  },
+
+  async undoLastRound(): Promise<void> {
+    if (!activeGame) return;
+    activeGame = await api.rounds.undoLast(activeGame.code);
+  },
+
+  async abandonGame(): Promise<void> {
+    if (!activeGame) return;
+    activeGame = await api.games.abandon(activeGame.code);
+  },
+
+  async leaveGame(): Promise<void> {
+    if (activeGame && spectatorId) {
+      await api.spectators.leave(activeGame.code, spectatorId).catch(() => {});
+    }
+    disconnectSSE();
+    activeGame = null;
+    spectatorId = null;
+    isSpectator = false;
+  },
+
+  cleanup() {
+    disconnectSSE();
+    activeGame = null;
+    spectators = [];
+    spectatorId = null;
+    isSpectator = false;
   },
 };
