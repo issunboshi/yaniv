@@ -67,8 +67,7 @@
   }
 </script>
 
-<div class="overflow-x-auto">
-  <table class="w-full text-sm border-collapse">
+<table class="w-full text-sm border-collapse">
     <!-- Header -->
     <thead class="sticky top-0 z-10 bg-emerald-950">
       <tr class="border-b border-emerald-800">
@@ -109,7 +108,7 @@
     </tbody>
 
     <!-- Footer: running totals -->
-    <tfoot>
+    <tfoot class="sticky bottom-0 z-10 bg-emerald-950">
       <tr class="border-t-2 border-emerald-700">
         <td class="py-2 px-2 text-emerald-500 text-xs font-bold">TOT</td>
         {#each game.players as player}
@@ -124,4 +123,3 @@
       </tr>
     </tfoot>
   </table>
-</div>
