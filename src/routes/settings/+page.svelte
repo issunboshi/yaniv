@@ -131,6 +131,15 @@
             />
             Jokers
           </label>
+          <label class="flex items-center gap-2 text-emerald-300">
+            <input
+              type="checkbox"
+              checked={defaults.endOnFirstElimination}
+              onchange={(e) => updateCustomField('endOnFirstElimination', (e.target as HTMLInputElement).checked)}
+              class="accent-amber-500"
+            />
+            End on first out
+          </label>
         </div>
       {/if}
 

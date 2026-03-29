@@ -53,6 +53,7 @@ export interface GameSettings {
   tableTimerEnabled: boolean;
   tableTimerSeconds: number;
   jokersEnabled: boolean;
+  endOnFirstElimination: boolean;
   variantName: string;
 }
 

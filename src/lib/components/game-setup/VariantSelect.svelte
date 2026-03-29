@@ -75,6 +75,10 @@
         <input type="checkbox" bind:checked={settings.tableTimerEnabled} class="accent-amber-500" />
         Table timer
       </label>
+      <label class="flex items-center gap-2 text-emerald-300">
+        <input type="checkbox" bind:checked={settings.endOnFirstElimination} class="accent-amber-500" />
+        End on first out
+      </label>
     </div>
   {/if}
 

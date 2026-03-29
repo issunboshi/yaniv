@@ -72,8 +72,19 @@ export async function addRound(code: string, req: AddRoundRequest): Promise<Game
   }
 
   const remainingActive = activePlayers.filter(pid => !eliminations.includes(pid));
-  if (remainingActive.length <= 1) {
-    const winnerId = remainingActive[0] ?? null;
+  const shouldEnd = remainingActive.length <= 1
+    || (settings.endOnFirstElimination && eliminations.length > 0);
+  if (shouldEnd) {
+    const prevTotalsForWinner = getRunningTotals([...game.rounds, {
+      id: '', roundNumber, handValues: req.handValues, appliedScores: finalScores,
+      yanivCallerId: req.yanivCallerId, assafPlayerIds, wasAssafed: result.wasAssafed,
+      halvingEvents, eliminations, createdAt: '',
+    }]);
+    const winnerId = remainingActive.length <= 1
+      ? (remainingActive[0] ?? null)
+      : remainingActive.reduce((best, pid) =>
+          (prevTotalsForWinner[pid] ?? 0) < (prevTotalsForWinner[best] ?? 0) ? pid : best
+        , remainingActive[0]);
     await sql`
       UPDATE games SET status = 'completed', winner_id = ${winnerId}, completed_at = now()
       WHERE id = ${game.id}
@@ -186,8 +197,19 @@ async function addRoundInternal(
   }
 
   const remainingActive = activePlayers.filter(pid => !eliminations.includes(pid));
-  if (remainingActive.length <= 1) {
-    const winnerId = remainingActive[0] ?? null;
+  const shouldEnd = remainingActive.length <= 1
+    || (settings.endOnFirstElimination && eliminations.length > 0);
+  if (shouldEnd) {
+    const allTotals = getRunningTotals([...game.rounds, {
+      id: '', roundNumber, handValues, appliedScores: finalScores,
+      yanivCallerId, assafPlayerIds: effectiveAssafPlayerIds, wasAssafed: result.wasAssafed,
+      halvingEvents, eliminations, createdAt: '',
+    }]);
+    const winnerId = remainingActive.length <= 1
+      ? (remainingActive[0] ?? null)
+      : remainingActive.reduce((best, pid) =>
+          (allTotals[pid] ?? 0) < (allTotals[best] ?? 0) ? pid : best
+        , remainingActive[0]);
     await sql`
       UPDATE games SET status = 'completed', winner_id = ${winnerId}, completed_at = now()
       WHERE id = ${game.id}

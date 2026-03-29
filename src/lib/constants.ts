@@ -23,6 +23,7 @@ export const VARIANT_CLASSIC: GameSettings = {
   tableTimerEnabled: false,
   tableTimerSeconds: 60,
   jokersEnabled: true,
+  endOnFirstElimination: false,
   variantName: 'Classic',
 };
 
