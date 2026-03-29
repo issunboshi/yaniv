@@ -1,6 +1,25 @@
+import { browser } from '$app/environment';
 import { api } from './api';
 import { getRunningTotals } from '$lib/engine/scoring';
 import type { Game, GameEvent, CreateGameRequest, AddRoundRequest, Spectator } from '$lib/types';
+
+const SPECTATOR_KEY = 'yaniv-spectator';
+
+function saveSpectatorState(code: string, specId: string) {
+  if (browser) sessionStorage.setItem(SPECTATOR_KEY, JSON.stringify({ code, spectatorId: specId }));
+}
+
+function loadSpectatorState(code: string): string | null {
+  if (!browser) return null;
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(SPECTATOR_KEY) ?? 'null');
+    return stored?.code === code ? stored.spectatorId : null;
+  } catch { return null; }
+}
+
+function clearSpectatorState() {
+  if (browser) sessionStorage.removeItem(SPECTATOR_KEY);
+}
 
 let activeGame = $state<Game | null>(null);
 let spectators = $state<Spectator[]>([]);
@@ -59,6 +78,7 @@ export const gameStore = {
     const game = await api.games.create(req);
     activeGame = game;
     isSpectator = false;
+    clearSpectatorState();
     connectSSE(game.code);
     return game;
   },
@@ -66,7 +86,13 @@ export const gameStore = {
   async loadGame(code: string): Promise<Game | null> {
     const game = await api.games.get(code);
     activeGame = game;
-    isSpectator = false;
+    const savedSpectatorId = loadSpectatorState(code);
+    if (savedSpectatorId) {
+      isSpectator = true;
+      spectatorId = savedSpectatorId;
+    } else {
+      isSpectator = false;
+    }
     connectSSE(code);
     return game;
   },
@@ -77,6 +103,7 @@ export const gameStore = {
     isSpectator = true;
     const spectator = await api.spectators.join(code, playerId);
     spectatorId = spectator.id;
+    saveSpectatorState(code, spectator.id);
     connectSSE(code);
   },
 
@@ -108,6 +135,7 @@ export const gameStore = {
     activeGame = null;
     spectatorId = null;
     isSpectator = false;
+    clearSpectatorState();
   },
 
   cleanup() {
