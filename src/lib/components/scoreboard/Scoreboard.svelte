@@ -70,7 +70,7 @@
 <div class="overflow-x-auto">
   <table class="w-full text-sm border-collapse">
     <!-- Header -->
-    <thead>
+    <thead class="sticky top-0 z-10 bg-emerald-950">
       <tr class="border-b border-emerald-800">
         <th class="text-left py-2 px-2 text-emerald-500 font-normal w-8">#</th>
         {#each game.players as player}

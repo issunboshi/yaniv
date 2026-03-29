@@ -152,7 +152,7 @@
     {/if}
 
     <!-- Scoreboard -->
-    <div class="rounded-xl border border-emerald-800/50 bg-emerald-950/60 overflow-hidden">
+    <div class="rounded-xl border border-emerald-800/50 bg-emerald-950/60 overflow-auto max-h-[60vh]">
       <Scoreboard {game} onEditRound={game.status === 'in_progress' && !gameStore.isSpectator ? handleEditRoundRequest : undefined} />
     </div>
 
