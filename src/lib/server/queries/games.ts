@@ -20,6 +20,7 @@ function buildGameFromRows(
     jokersEnabled: gameRow.jokers_enabled as boolean,
     tableTimerEnabled: gameRow.timer_enabled as boolean,
     tableTimerSeconds: gameRow.timer_seconds as number,
+    endOnFirstElimination: gameRow.end_on_first_elimination as boolean,
     variantName: gameRow.variant_name as string,
   };
 
@@ -108,11 +109,11 @@ export async function createGame(req: CreateGameRequest): Promise<Game> {
     INSERT INTO games (
       code, variant_name, score_limit, yaniv_threshold,
       halving_enabled, halving_multiple, assaf_enabled, assaf_penalty, auto_assaf,
-      jokers_enabled, timer_enabled, timer_seconds, created_by
+      jokers_enabled, timer_enabled, timer_seconds, end_on_first_elimination, created_by
     ) VALUES (
       ${code}, ${s.variantName}, ${s.scoreLimit}, ${s.yanivThreshold},
       ${s.halvingEnabled}, ${s.halvingMultiple}, ${s.assafEnabled}, ${s.assafPenalty}, ${s.autoAssaf},
-      ${s.jokersEnabled}, ${s.tableTimerEnabled}, ${s.tableTimerSeconds}, ${createdById}
+      ${s.jokersEnabled}, ${s.tableTimerEnabled}, ${s.tableTimerSeconds}, ${s.endOnFirstElimination}, ${createdById}
     )
     RETURNING *
   `;
