@@ -19,14 +19,19 @@
     const totals = getRunningTotals(game.rounds);
     const limit = game.settings.scoreLimit;
 
-    // Sort: non-eliminated by score (ascending), then eliminated by round
+    // Sort players based on game mode
     const sorted = [...game.players].sort((a, b) => {
+      if (game.settings.endOnFirstElimination) {
+        // Sort everyone by score — eliminated players naturally rank last
+        return (totals[a.playerId] ?? 0) - (totals[b.playerId] ?? 0);
+      }
+      // Standard mode: non-eliminated by score, eliminated by who lasted longest
       if (!a.eliminated && !b.eliminated) {
         return (totals[a.playerId] ?? 0) - (totals[b.playerId] ?? 0);
       }
       if (a.eliminated && !b.eliminated) return 1;
       if (!a.eliminated && b.eliminated) return -1;
-      return (a.eliminatedAtRound ?? 0) - (b.eliminatedAtRound ?? 0);
+      return (b.eliminatedAtRound ?? 0) - (a.eliminatedAtRound ?? 0);
     });
 
     const lines: string[] = ['🃏 Yaniv Results 🃏', ''];
