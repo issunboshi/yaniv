@@ -6,6 +6,7 @@
   import Header from '$lib/components/layout/Header.svelte';
   import Scoreboard from '$lib/components/scoreboard/Scoreboard.svelte';
   import RoundEntryPanel from '$lib/components/round-entry/RoundEntryPanel.svelte';
+  import GameCodeDisplay from '$lib/components/game/GameCodeDisplay.svelte';
   import { gameStore } from '$lib/stores/game.svelte';
   import { audio } from '$lib/stores/audio.svelte';
   import TableTimer from '$lib/components/timer/TableTimer.svelte';
@@ -136,6 +137,9 @@
   <Header title="Round {roundCount + 1}" showBack />
 
   <div class="mx-auto max-w-lg px-4 py-4 space-y-4">
+    <!-- Share game code -->
+    <GameCodeDisplay code={game.code} />
+
     <!-- Game status bar -->
     <div class="flex items-center justify-between text-xs text-emerald-500">
       <span>{activePlayerCount} active · limit {game.settings.scoreLimit}</span>
