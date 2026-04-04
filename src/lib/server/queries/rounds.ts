@@ -36,11 +36,13 @@ export async function addRound(code: string, req: AddRoundRequest): Promise<Game
     const prevTotal = prevTotals[pid] ?? 0;
     let newTotal = prevTotal + finalScores[pid];
 
-    const halvedTotal = checkHalving(newTotal, settings);
-    if (halvedTotal !== newTotal) {
-      halvingEvents.push(pid);
-      finalScores[pid] = halvedTotal - prevTotal;
-      newTotal = halvedTotal;
+    if (finalScores[pid] > 0) {
+      const halvedTotal = checkHalving(newTotal, settings);
+      if (halvedTotal !== newTotal) {
+        halvingEvents.push(pid);
+        finalScores[pid] = halvedTotal - prevTotal;
+        newTotal = halvedTotal;
+      }
     }
 
     if (checkElimination(newTotal, settings)) {
@@ -161,11 +163,13 @@ async function addRoundInternal(
     const prevTotal = prevTotals[pid] ?? 0;
     let newTotal = prevTotal + finalScores[pid];
 
-    const halvedTotal = checkHalving(newTotal, settings);
-    if (halvedTotal !== newTotal) {
-      halvingEvents.push(pid);
-      finalScores[pid] = halvedTotal - prevTotal;
-      newTotal = halvedTotal;
+    if (finalScores[pid] > 0) {
+      const halvedTotal = checkHalving(newTotal, settings);
+      if (halvedTotal !== newTotal) {
+        halvingEvents.push(pid);
+        finalScores[pid] = halvedTotal - prevTotal;
+        newTotal = halvedTotal;
+      }
     }
 
     if (checkElimination(newTotal, settings)) {
