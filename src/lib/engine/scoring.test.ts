@@ -52,6 +52,20 @@ describe('checkHalving', () => {
     const noHalving = { ...settings, halvingEnabled: false };
     expect(checkHalving(100, noHalving)).toBe(100);
   });
+
+  it('subtracts halvingMultiple in subtract mode', () => {
+    const subtractSettings = { ...settings, halvingMode: 'subtract' as const };
+    expect(checkHalving(100, subtractSettings)).toBe(50);
+    expect(checkHalving(50, subtractSettings)).toBe(0);
+    expect(checkHalving(150, subtractSettings)).toBe(100);
+    expect(checkHalving(200, subtractSettings)).toBe(150);
+  });
+
+  it('does not subtract at non-multiples', () => {
+    const subtractSettings = { ...settings, halvingMode: 'subtract' as const };
+    expect(checkHalving(99, subtractSettings)).toBe(99);
+    expect(checkHalving(51, subtractSettings)).toBe(51);
+  });
 });
 
 describe('checkElimination', () => {
@@ -84,9 +98,9 @@ describe('getRunningTotals', () => {
 
 describe('calculateRoundScores with multiple assafers', () => {
   const settings: GameSettings = {
-    scoreLimit: 200, yanivThreshold: 5, halvingEnabled: true, halvingMultiple: 50,
+    scoreLimit: 200, yanivThreshold: 5, halvingEnabled: true, halvingMultiple: 50, halvingMode: 'halve',
     assafEnabled: true, assafPenalty: 30, autoAssaf: false, tableTimerEnabled: false, tableTimerSeconds: 60,
-    jokersEnabled: true, variantName: 'Classic',
+    jokersEnabled: true, variantName: 'Classic', endOnFirstElimination: false,
   };
 
   it('handles multiple assafers — all get 0, caller gets penalty', () => {

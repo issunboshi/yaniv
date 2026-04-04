@@ -35,7 +35,7 @@
     {
       id: 'scoring',
       title: 'Scoring & Halving',
-      content: `Successful Yaniv: the caller scores 0, all other players add their hand value to their running total. If a player's cumulative total lands exactly on a multiple of 50 (50, 100, 150…), their score is halved. Players whose total exceeds the score limit (default 200) are eliminated.`,
+      content: `Successful Yaniv: the caller scores 0, all other players add their hand value to their running total. If a player's cumulative total lands exactly on a multiple of 50 (50, 100, 150…), their score is either halved or reduced by 50, depending on the game setting. Players whose total exceeds the score limit (default 200) are eliminated.`,
     },
     {
       id: 'winning',

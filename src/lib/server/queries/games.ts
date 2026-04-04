@@ -14,6 +14,7 @@ function buildGameFromRows(
     yanivThreshold: gameRow.yaniv_threshold as number,
     halvingEnabled: gameRow.halving_enabled as boolean,
     halvingMultiple: gameRow.halving_multiple as number,
+    halvingMode: (gameRow.halving_mode as 'halve' | 'subtract') ?? 'halve',
     assafEnabled: gameRow.assaf_enabled as boolean,
     assafPenalty: gameRow.assaf_penalty as number,
     autoAssaf: gameRow.auto_assaf as boolean,
@@ -108,11 +109,11 @@ export async function createGame(req: CreateGameRequest): Promise<Game> {
   const [gameRow] = await sql`
     INSERT INTO games (
       code, variant_name, score_limit, yaniv_threshold,
-      halving_enabled, halving_multiple, assaf_enabled, assaf_penalty, auto_assaf,
+      halving_enabled, halving_multiple, halving_mode, assaf_enabled, assaf_penalty, auto_assaf,
       jokers_enabled, timer_enabled, timer_seconds, end_on_first_elimination, created_by
     ) VALUES (
       ${code}, ${s.variantName}, ${s.scoreLimit}, ${s.yanivThreshold},
-      ${s.halvingEnabled}, ${s.halvingMultiple}, ${s.assafEnabled}, ${s.assafPenalty}, ${s.autoAssaf},
+      ${s.halvingEnabled}, ${s.halvingMultiple}, ${s.halvingMode}, ${s.assafEnabled}, ${s.assafPenalty}, ${s.autoAssaf},
       ${s.jokersEnabled}, ${s.tableTimerEnabled}, ${s.tableTimerSeconds}, ${s.endOnFirstElimination}, ${createdById}
     )
     RETURNING *

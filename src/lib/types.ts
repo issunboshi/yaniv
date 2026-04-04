@@ -47,6 +47,7 @@ export interface GameSettings {
   yanivThreshold: number;
   halvingEnabled: boolean;
   halvingMultiple: number;
+  halvingMode: 'halve' | 'subtract';
   assafEnabled: boolean;
   assafPenalty: number;
   autoAssaf: boolean;

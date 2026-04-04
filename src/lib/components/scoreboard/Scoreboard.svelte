@@ -60,7 +60,7 @@
     }
 
     if (isHalved && !isYanivCaller && !isAssafer) {
-      text += ' ½';
+      text += game.settings.halvingMode === 'subtract' ? ` −${game.settings.halvingMultiple}` : ' ½';
     }
 
     return { text, classes };
