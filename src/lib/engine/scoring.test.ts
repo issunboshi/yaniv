@@ -134,4 +134,27 @@ describe('halving + running totals integration', () => {
     const totals = getRunningTotals([round1, round2]);
     expect(totals.p1).toBe(25);
   });
+
+  it('should not re-halve when player scores 0 while sitting on a halving boundary', () => {
+    // Player halved from 100 to 50, then wins next round (score 0).
+    // Total is still 50 (a multiple of 50) but should NOT be halved again.
+    const round1: Round = {
+      id: 'r1', roundNumber: 1, handValues: { p1: 100 }, appliedScores: { p1: 100 },
+      yanivCallerId: 'p2', wasAssafed: false, assafPlayerIds: [],
+      halvingEvents: [], eliminations: [], createdAt: '2026-01-01T00:00:00Z'
+    };
+    // After round 1, halving triggers: 100 -> 50, so applied score becomes -50
+    const round1Halved: Round = {
+      ...round1, appliedScores: { p1: 50 }, halvingEvents: ['p1']
+    };
+    // Round 2: player wins (score 0), total is still 50
+    const round2: Round = {
+      id: 'r2', roundNumber: 2, handValues: { p1: 0 }, appliedScores: { p1: 0 },
+      yanivCallerId: 'p1', wasAssafed: false, assafPlayerIds: [],
+      halvingEvents: [], eliminations: [], createdAt: '2026-01-01T00:01:00Z'
+    };
+    // Total should remain 50, NOT halved again to 25
+    const totals = getRunningTotals([round1Halved, round2]);
+    expect(totals.p1).toBe(50);
+  });
 });
