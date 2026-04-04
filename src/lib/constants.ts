@@ -17,6 +17,7 @@ export const VARIANT_CLASSIC: GameSettings = {
   yanivThreshold: 5,
   halvingEnabled: true,
   halvingMultiple: 50,
+  halvingMode: 'halve',
   assafEnabled: true,
   assafPenalty: 30,
   autoAssaf: false,

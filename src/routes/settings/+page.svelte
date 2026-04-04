@@ -113,6 +113,16 @@
             />
             Halving
           </label>
+          {#if defaults.halvingEnabled}
+            <select
+              value={defaults.halvingMode}
+              onchange={(e) => updateCustomField('halvingMode', (e.target as HTMLSelectElement).value as 'halve' | 'subtract')}
+              class="rounded-lg px-2 py-1 text-sm bg-emerald-900/40 text-emerald-300 border border-emerald-700"
+            >
+              <option value="halve">Halve score (÷2)</option>
+              <option value="subtract">Subtract {defaults.halvingMultiple}</option>
+            </select>
+          {/if}
           <label class="flex items-center gap-2 text-emerald-300">
             <input
               type="checkbox"

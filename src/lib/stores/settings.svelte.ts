@@ -15,7 +15,13 @@ function loadSettings(): AppSettings {
   if (!browser) return defaultSettings;
   try {
     const stored = localStorage.getItem(SETTINGS_KEY);
-    return stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
+    if (!stored) return defaultSettings;
+    const parsed = JSON.parse(stored);
+    return {
+      ...defaultSettings,
+      ...parsed,
+      defaultGameSettings: { ...defaultSettings.defaultGameSettings, ...parsed.defaultGameSettings },
+    };
   } catch {
     return defaultSettings;
   }

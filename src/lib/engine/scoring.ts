@@ -37,6 +37,9 @@ export function calculateRoundScores(
 export function checkHalving(score: number, settings: GameSettings): number {
   if (!settings.halvingEnabled) return score;
   if (score > 0 && score % settings.halvingMultiple === 0) {
+    if (settings.halvingMode === 'subtract') {
+      return score - settings.halvingMultiple;
+    }
     return Math.floor(score / 2);
   }
   return score;

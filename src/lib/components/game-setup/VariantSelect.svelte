@@ -55,8 +55,17 @@
     <div class="flex flex-wrap gap-4 text-sm mt-3">
       <label class="flex items-center gap-2 text-emerald-300">
         <input type="checkbox" bind:checked={settings.halvingEnabled} class="accent-amber-500" />
-        Halving at 50s
+        Halving at {settings.halvingMultiple}s
       </label>
+      {#if settings.halvingEnabled}
+        <select
+          bind:value={settings.halvingMode}
+          class="rounded-lg px-2 py-1 text-sm bg-emerald-900/40 text-emerald-300 border border-emerald-700"
+        >
+          <option value="halve">Halve score (÷2)</option>
+          <option value="subtract">Subtract {settings.halvingMultiple}</option>
+        </select>
+      {/if}
       <label class="flex items-center gap-2 text-emerald-300">
         <input type="checkbox" bind:checked={settings.assafEnabled} class="accent-amber-500" />
         Assaf rule
